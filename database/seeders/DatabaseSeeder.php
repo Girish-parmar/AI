@@ -4,9 +4,15 @@ namespace Database\Seeders;
 
 use App\Enums\ApprovalStatus;
 use App\Enums\ContentStatus;
+use App\Enums\PurchaseStatus;
 use App\Enums\Role;
+use App\Enums\SubscriptionStatus;
+use App\Enums\TransactionStatus;
 use App\Models\Course;
+use App\Models\Purchase;
 use App\Models\Script;
+use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -49,7 +55,7 @@ class DatabaseSeeder extends Seeder
             $creator
         );
 
-        Course::factory()->approved()->create(['creator_id' => $creator->id, 'title' => 'Laravel for Beginners']);
+        $approvedCourse = Course::factory()->approved()->create(['creator_id' => $creator->id, 'title' => 'Laravel for Beginners']);
 
         $this->reviewed(
             Course::factory()->rejected()->create(['creator_id' => $creator->id, 'title' => 'Get Rich Quick']),
@@ -71,6 +77,42 @@ class DatabaseSeeder extends Seeder
         );
 
         Script::factory()->approved()->create(['creator_id' => $creator->id, 'title' => 'Log Parser']);
+
+        SubscriptionPlan::factory()->create(['name' => 'Basic Plan', 'slug' => 'basic', 'price' => 9.99]);
+        $proPlan = SubscriptionPlan::factory()->create(['name' => 'Pro Plan', 'slug' => 'pro', 'price' => 29.99]);
+        SubscriptionPlan::factory()->inactive()->create(['name' => 'Legacy Plan', 'slug' => 'legacy', 'price' => 4.99]);
+
+        $subscriber = $users['user'];
+
+        $subscription = Subscription::create([
+            'user_id' => $subscriber->id,
+            'subscription_plan_id' => $proPlan->id,
+            'status' => SubscriptionStatus::Active,
+            'starts_at' => now()->subDays(10),
+        ]);
+
+        $this->paid($subscriber, $subscription, $proPlan->price);
+
+        $purchase = Purchase::create([
+            'user_id' => $subscriber->id,
+            'purchasable_type' => Course::class,
+            'purchasable_id' => $approvedCourse->id,
+            'price' => $approvedCourse->price,
+            'status' => PurchaseStatus::Completed,
+        ]);
+
+        $this->paid($subscriber, $purchase, $purchase->price);
+    }
+
+    private function paid(User $user, Subscription|Purchase $payable, string $amount): void
+    {
+        $payable->transactions()->create([
+            'user_id' => $user->id,
+            'amount' => $amount,
+            'gateway' => 'manual',
+            'gateway_reference' => 'seed-'.strtolower(class_basename($payable)).'-'.$payable->id,
+            'status' => TransactionStatus::Succeeded,
+        ]);
     }
 
     private function submitted(Course|Script $content, User $creator): void
