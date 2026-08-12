@@ -1,0 +1,11 @@
+.hero-section {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 60%, #312e81 100%);
+}
+
+.auth-card {
+    max-width: 26rem;
+}
+
+.min-vh-100 {
+    min-height: 100vh;
+}
