@@ -19,7 +19,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email' => ['required', 'string', 'email', 'max:255'],
             'password' => ['required', 'string'],
         ];
     }
@@ -59,9 +59,12 @@ class LoginRequest extends FormRequest
 
     /**
      * Key attempts by email+IP so one bad actor can't lock out someone else's account.
+     * Hashed to a fixed length so long input can't overflow the cache store's key column.
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        $identifier = Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+
+        return 'login:'.hash('sha256', $identifier);
     }
 }

@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    /**
+     * Send a signed-in user to the dashboard for their role.
+     */
+    public function index(Request $request): RedirectResponse
     {
-        return view('dashboard');
+        return redirect()->route($request->user()->role->dashboardRoute());
     }
 }
