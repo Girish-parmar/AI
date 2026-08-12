@@ -1,36 +1,34 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# Laravel
+/vendor
 /node_modules
-/.pnp
-.pnp.js
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+.phpunit.result.cache
+.phpunit.cache
 
-# testing
-/coverage
+# Environment / local config
+.env
+.env.backup
+.env.production
+.env.*.local
 
-# next.js
-/.next/
-/out/
+# Local database
+/database/*.sqlite
+/database/*.sqlite-journal
 
-# production
-/build
-
-# misc
+# IDE / OS
 .DS_Store
-*.pem
+Thumbs.db
+.idea
+.vscode
+.phpactor.json
+_ide_helper.php
 
-# debug
+# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# local env files
-.env*.local
-.env
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
