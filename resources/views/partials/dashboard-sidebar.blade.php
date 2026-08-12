@@ -5,10 +5,13 @@
             <li class="nav-item">
                 @if ($item['available'])
                     <a
-                        href="{{ route($role->dashboardRoute()) }}"
-                        class="nav-link {{ request()->routeIs($role->dashboardRoute()) ? 'active' : 'text-body' }}"
+                        href="{{ route($item['route']) }}"
+                        class="nav-link {{ request()->routeIs($item['route']) ? 'active' : 'text-body' }}"
                     >
                         {{ $item['label'] }}
+                        @isset($item['note'])
+                            <span class="badge text-bg-light text-body-secondary ms-1">{{ $item['note'] }}</span>
+                        @endisset
                     </a>
                 @else
                     <span class="nav-link text-body-secondary d-flex justify-content-between align-items-center disabled">

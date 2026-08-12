@@ -1,15 +1,23 @@
 <?php
 
 use App\Http\Controllers\Accounts\DashboardController as AccountsDashboardController;
+use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\ScriptController as AdminScriptController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Creator\CourseController as CreatorCourseController;
 use App\Http\Controllers\Creator\DashboardController as CreatorDashboardController;
+use App\Http\Controllers\Creator\ScriptController as CreatorScriptController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Monitoring\CourseController as MonitoringCourseController;
 use App\Http\Controllers\Monitoring\DashboardController as MonitoringDashboardController;
+use App\Http\Controllers\Monitoring\ScriptController as MonitoringScriptController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
+use App\Http\Controllers\User\CourseController as UserCourseController;
 use App\Http\Controllers\User\DashboardController as UserDashboardController;
+use App\Http\Controllers\User\ScriptController as UserScriptController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -37,11 +45,21 @@ Route::middleware(['auth', 'role:superadmin'])
         Route::get('dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
     });
 
-Route::middleware(['auth', 'role:admin'])
+// Full course/script management, shared by Admin and SuperAdmin (SuperAdmin's
+// sidebar links into these same /admin/* pages rather than duplicating them).
+Route::middleware(['auth', 'role:admin,superadmin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+        Route::resource('courses', AdminCourseController::class)->only(['index', 'edit', 'update', 'destroy']);
+        Route::post('courses/{course}/approve', [AdminCourseController::class, 'approve'])->name('courses.approve');
+        Route::post('courses/{course}/reject', [AdminCourseController::class, 'reject'])->name('courses.reject');
+
+        Route::resource('scripts', AdminScriptController::class)->only(['index', 'edit', 'update', 'destroy']);
+        Route::post('scripts/{script}/approve', [AdminScriptController::class, 'approve'])->name('scripts.approve');
+        Route::post('scripts/{script}/reject', [AdminScriptController::class, 'reject'])->name('scripts.reject');
     });
 
 Route::middleware(['auth', 'role:monitoring'])
@@ -49,6 +67,9 @@ Route::middleware(['auth', 'role:monitoring'])
     ->name('monitoring.')
     ->group(function () {
         Route::get('dashboard', [MonitoringDashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('courses', [MonitoringCourseController::class, 'index'])->name('courses.index');
+        Route::get('scripts', [MonitoringScriptController::class, 'index'])->name('scripts.index');
     });
 
 Route::middleware(['auth', 'role:creator'])
@@ -56,6 +77,12 @@ Route::middleware(['auth', 'role:creator'])
     ->name('creator.')
     ->group(function () {
         Route::get('dashboard', [CreatorDashboardController::class, 'index'])->name('dashboard');
+
+        Route::resource('courses', CreatorCourseController::class)->except(['show']);
+        Route::post('courses/{course}/submit', [CreatorCourseController::class, 'submit'])->name('courses.submit');
+
+        Route::resource('scripts', CreatorScriptController::class)->except(['show']);
+        Route::post('scripts/{script}/submit', [CreatorScriptController::class, 'submit'])->name('scripts.submit');
     });
 
 Route::middleware(['auth', 'role:user'])
@@ -63,6 +90,12 @@ Route::middleware(['auth', 'role:user'])
     ->name('user.')
     ->group(function () {
         Route::get('dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('courses', [UserCourseController::class, 'index'])->name('courses.index');
+        Route::get('courses/{course}', [UserCourseController::class, 'show'])->name('courses.show');
+
+        Route::get('scripts', [UserScriptController::class, 'index'])->name('scripts.index');
+        Route::get('scripts/{script}', [UserScriptController::class, 'show'])->name('scripts.show');
     });
 
 Route::middleware(['auth', 'role:accounts'])

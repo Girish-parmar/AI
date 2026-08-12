@@ -8,21 +8,5 @@
         Publish courses and scripts, submit them for approval, and track what you've earned.
     </p>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body">
-            <h2 class="h6 fw-semibold mb-3">Modules</h2>
-            <ul class="list-group list-group-flush">
-                @foreach ($role->navItems() as $item)
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        {{ $item['label'] }}
-                        @if ($item['available'])
-                            <span class="badge text-bg-success">Live</span>
-                        @else
-                            <span class="badge text-bg-secondary">Coming soon</span>
-                        @endif
-                    </li>
-                @endforeach
-            </ul>
-        </div>
-    </div>
+    @include('partials.dashboard-modules-card')
 @endsection

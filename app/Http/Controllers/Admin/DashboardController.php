@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use Illuminate\View\View;
 
@@ -10,6 +9,8 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
-        return view('admin.dashboard', ['role' => Role::Admin]);
+        // Shared by Admin and SuperAdmin — the dashboard layout's view
+        // composer fills in `role` from the signed-in user automatically.
+        return view('admin.dashboard');
     }
 }
