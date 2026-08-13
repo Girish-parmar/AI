@@ -38,7 +38,7 @@
                             <td>{{ $script->title }}</td>
                             <td>{{ $script->creator->name }}</td>
                             <td>{{ $script->category }}</td>
-                            <td>${{ number_format($script->price, 2) }}</td>
+                            <td>{{ money($script->price) }}</td>
                             <td><span class="badge {{ $script->status->badgeClass() }}">{{ $script->status->label() }}</span></td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-2">

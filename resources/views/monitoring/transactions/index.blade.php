@@ -22,6 +22,7 @@
             <table class="table align-middle bg-white">
                 <thead>
                     <tr>
+                        <th>Reference</th>
                         <th>When</th>
                         <th>User</th>
                         <th>Item</th>
@@ -32,6 +33,7 @@
                 <tbody>
                     @foreach ($transactions as $transaction)
                         <tr>
+                            <td><span class="badge text-bg-light text-body-secondary font-monospace">{{ $transaction->reference() }}</span></td>
                             <td class="text-nowrap">{{ $transaction->created_at->format('Y-m-d H:i') }}</td>
                             <td>{{ $transaction->user->name }}</td>
                             <td>
@@ -46,7 +48,7 @@
                                     &mdash;
                                 @endif
                             </td>
-                            <td>${{ number_format($transaction->amount, 2) }}</td>
+                            <td>{{ money($transaction->amount) }}</td>
                             <td><span class="badge {{ $transaction->status->badgeClass() }}">{{ $transaction->status->label() }}</span></td>
                         </tr>
                     @endforeach

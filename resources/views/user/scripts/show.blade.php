@@ -10,7 +10,7 @@
             <span class="badge text-bg-light text-body-secondary mb-2">{{ $script->category }}</span>
             <h1 class="h3 fw-bold">{{ $script->title }}</h1>
             <p class="text-body-secondary mb-3">by {{ $script->creator->name }}</p>
-            <p class="fs-4 fw-bold mb-3">${{ number_format($script->price, 2) }}</p>
+            <p class="fs-4 fw-bold mb-3">{{ money($script->price) }}</p>
 
             @if ($demoAccess)
                 <div class="alert alert-info">

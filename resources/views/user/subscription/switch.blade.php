@@ -20,13 +20,13 @@
                 <dd class="col-5 text-end">{{ $proration['remaining_days'] }}</dd>
 
                 <dt class="col-7 fw-normal text-body-secondary">Credit for unused time</dt>
-                <dd class="col-5 text-end">&minus;${{ number_format($proration['credit'], 2) }}</dd>
+                <dd class="col-5 text-end">&minus;{{ money($proration['credit']) }}</dd>
 
                 <dt class="col-7 fw-normal text-body-secondary">New plan, prorated</dt>
-                <dd class="col-5 text-end">${{ number_format($proration['charge'], 2) }}</dd>
+                <dd class="col-5 text-end">{{ money($proration['charge']) }}</dd>
 
                 <dt class="col-7 fw-semibold border-top pt-2 mt-1">Due now</dt>
-                <dd class="col-5 text-end fw-semibold border-top pt-2 mt-1">${{ number_format($proration['amount_due'], 2) }}</dd>
+                <dd class="col-5 text-end fw-semibold border-top pt-2 mt-1">{{ money($proration['amount_due']) }}</dd>
             </dl>
 
             @if ($proration['amount_due'] > 0)

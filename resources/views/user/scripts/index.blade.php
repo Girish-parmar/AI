@@ -21,7 +21,7 @@
                             </h2>
                             <p class="text-body-secondary small flex-grow-1">{{ \Illuminate\Support\Str::limit($script->description, 120) }}</p>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-bold">${{ number_format($script->price, 2) }}</span>
+                                <span class="fw-bold">{{ money($script->price) }}</span>
                                 <span class="text-body-secondary small">by {{ $script->creator->name }}</span>
                             </div>
                         </div>

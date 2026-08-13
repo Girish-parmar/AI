@@ -29,7 +29,7 @@
                         <tr>
                             <td>{{ $course->title }}</td>
                             <td>{{ $course->category }}</td>
-                            <td>${{ number_format($course->price, 2) }}</td>
+                            <td>{{ money($course->price) }}</td>
                             <td><span class="badge {{ $course->status->badgeClass() }}">{{ $course->status->label() }}</span></td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-2">

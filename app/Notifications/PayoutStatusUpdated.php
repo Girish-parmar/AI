@@ -25,7 +25,7 @@ class PayoutStatusUpdated extends Notification
         return (new MailMessage)
             ->subject("Your payout was {$verb}")
             ->greeting("Hi {$notifiable->name},")
-            ->line("Your payout of \${$this->amount} was {$verb}.")
+            ->line('Your payout of '.money($this->amount)." was {$verb}.")
             ->action('View my earnings', route('creator.earnings.index'));
     }
 
@@ -34,7 +34,7 @@ class PayoutStatusUpdated extends Notification
         $verb = $this->status === PayoutStatus::Paid ? 'paid' : 'failed';
 
         return [
-            'message' => "Your payout of \${$this->amount} was {$verb}.",
+            'message' => 'Your payout of '.money($this->amount)." was {$verb}.",
             'url' => route('creator.earnings.index'),
         ];
     }

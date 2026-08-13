@@ -10,7 +10,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-body-secondary small text-uppercase">Total earned</div>
-                    <div class="fs-4 fw-bold">${{ number_format($totalEarned, 2) }}</div>
+                    <div class="fs-4 fw-bold">{{ money($totalEarned) }}</div>
                 </div>
             </div>
         </div>
@@ -18,7 +18,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-body-secondary small text-uppercase">Paid out</div>
-                    <div class="fs-4 fw-bold">${{ number_format($totalPaidOut, 2) }}</div>
+                    <div class="fs-4 fw-bold">{{ money($totalPaidOut) }}</div>
                 </div>
             </div>
         </div>
@@ -26,7 +26,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-body-secondary small text-uppercase">Outstanding</div>
-                    <div class="fs-4 fw-bold">${{ number_format($outstanding, 2) }}</div>
+                    <div class="fs-4 fw-bold">{{ money($outstanding) }}</div>
                 </div>
             </div>
         </div>
@@ -52,7 +52,7 @@
                         <tr>
                             <td>{{ $purchase->purchasable->title ?? 'Deleted item' }}</td>
                             <td>{{ class_basename($purchase->purchasable_type) }}</td>
-                            <td>${{ number_format($purchase->price, 2) }}</td>
+                            <td>{{ money($purchase->price) }}</td>
                             <td><span class="badge {{ $purchase->status->badgeClass() }}">{{ $purchase->status->label() }}</span></td>
                             <td>{{ $purchase->created_at->format('Y-m-d') }}</td>
                         </tr>
@@ -79,7 +79,7 @@
                 <tbody>
                     @foreach ($payouts as $payout)
                         <tr>
-                            <td>${{ number_format($payout->amount, 2) }}</td>
+                            <td>{{ money($payout->amount) }}</td>
                             <td><span class="badge {{ $payout->status->badgeClass() }}">{{ $payout->status->label() }}</span></td>
                             <td>{{ $payout->created_at->format('Y-m-d') }}</td>
                             <td>{{ $payout->paid_at?->format('Y-m-d') ?? '—' }}</td>
