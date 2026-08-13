@@ -14,4 +14,16 @@ enum BillingInterval: string
             self::Yearly => 'Yearly',
         };
     }
+
+    /**
+     * Nominal length of one billing period, used to compute the end of a
+     * cycle and to prorate a mid-cycle plan switch.
+     */
+    public function periodDays(): int
+    {
+        return match ($this) {
+            self::Monthly => 30,
+            self::Yearly => 365,
+        };
+    }
 }

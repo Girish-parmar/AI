@@ -15,6 +15,7 @@
                         <th>Name</th>
                         <th>Price</th>
                         <th>Billing</th>
+                        <th>Trial</th>
                         <th>Subscribers</th>
                         <th>Status</th>
                     </tr>
@@ -25,6 +26,7 @@
                             <td>{{ $plan->name }}</td>
                             <td>${{ number_format($plan->price, 2) }}</td>
                             <td>{{ $plan->billing_interval->label() }}</td>
+                            <td>{{ $plan->hasTrial() ? "{$plan->trial_days} days" : '—' }}</td>
                             <td>{{ $plan->subscriptions_count }}</td>
                             <td>
                                 @if ($plan->is_active)

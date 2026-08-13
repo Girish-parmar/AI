@@ -86,7 +86,7 @@ class DatabaseSeeder extends Seeder
 
         $approvedScript = Script::factory()->approved()->create(['creator_id' => $creator->id, 'title' => 'Log Parser']);
 
-        $basicPlan = SubscriptionPlan::factory()->create(['name' => 'Basic Plan', 'slug' => 'basic', 'price' => 9.99]);
+        $basicPlan = SubscriptionPlan::factory()->withTrial(14)->create(['name' => 'Basic Plan', 'slug' => 'basic', 'price' => 9.99]);
         $proPlan = SubscriptionPlan::factory()->create(['name' => 'Pro Plan', 'slug' => 'pro', 'price' => 29.99]);
         SubscriptionPlan::factory()->inactive()->create(['name' => 'Legacy Plan', 'slug' => 'legacy', 'price' => 4.99]);
 

@@ -46,8 +46,22 @@ class TransactionController extends Controller
             $payable->update(['status' => PurchaseStatus::Completed]);
             $transaction->user->notify(new PurchaseStatusUpdated($payable->purchasable->title, PurchaseStatus::Completed));
         } elseif ($payable instanceof Subscription) {
-            $payable->update(['status' => SubscriptionStatus::Active]);
-            $transaction->user->notify(new SubscriptionStatusUpdated($payable->plan->name, SubscriptionStatus::Active));
+            // A subscription only has no current_period_ends_at before its
+            // very first payment clears — a later succeeded transaction
+            // (e.g. a prorated plan-switch charge) must not push the period
+            // out again, since proration deliberately keeps it unchanged.
+            $isInitialActivation = $payable->current_period_ends_at === null;
+
+            $payable->update([
+                'status' => SubscriptionStatus::Active,
+                ...($isInitialActivation
+                    ? ['current_period_ends_at' => now()->addDays($payable->plan->billing_interval->periodDays())]
+                    : []),
+            ]);
+
+            if ($isInitialActivation) {
+                $transaction->user->notify(new SubscriptionStatusUpdated($payable->plan->name, SubscriptionStatus::Active));
+            }
         }
 
         return back()->with('status', 'Transaction marked as succeeded.');
@@ -64,7 +78,11 @@ class TransactionController extends Controller
         if ($payable instanceof Purchase) {
             $payable->update(['status' => PurchaseStatus::Failed]);
             $transaction->user->notify(new PurchaseStatusUpdated($payable->purchasable->title, PurchaseStatus::Failed));
-        } elseif ($payable instanceof Subscription) {
+        } elseif ($payable instanceof Subscription && $payable->status === SubscriptionStatus::Pending) {
+            // Only the subscription's first (activating) payment cancels it
+            // on failure. A later charge failing — e.g. a prorated
+            // plan-switch — leaves an already-active subscription alone;
+            // Accounts follows up on collecting it manually.
             $payable->update(['status' => SubscriptionStatus::Cancelled, 'cancelled_at' => now()]);
             $transaction->user->notify(new SubscriptionStatusUpdated($payable->plan->name, SubscriptionStatus::Cancelled));
         }

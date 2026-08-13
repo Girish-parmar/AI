@@ -20,14 +20,30 @@
                     <span class="badge {{ $subscription->status->badgeClass() }}">{{ $subscription->status->label() }}</span>
                 </p>
 
-                @if (in_array($subscription->status->value, ['pending', 'active']))
-                    <form method="POST" action="{{ route('user.subscription.cancel') }}" onsubmit="return confirm('Cancel your subscription?');">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-danger">Cancel subscription</button>
-                    </form>
-                @else
-                    <a href="{{ route('user.plans.index') }}" class="btn btn-primary">Browse plans</a>
+                @if ($subscription->onTrial())
+                    <p class="text-body-secondary">
+                        Free trial ends <strong>{{ $subscription->trial_ends_at->format('Y-m-d') }}</strong> — you won't be charged until then.
+                    </p>
+                @elseif ($subscription->status->value === 'active' && $subscription->current_period_ends_at)
+                    <p class="text-body-secondary">
+                        Current period ends <strong>{{ $subscription->current_period_ends_at->format('Y-m-d') }}</strong>.
+                    </p>
                 @endif
+
+                <div class="d-flex gap-2">
+                    @if (in_array($subscription->status->value, ['pending', 'active']))
+                        <form method="POST" action="{{ route('user.subscription.cancel') }}" onsubmit="return confirm('Cancel your subscription?');">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-danger">Cancel subscription</button>
+                        </form>
+                    @endif
+
+                    @if ($subscription->status->value === 'active' && ! $subscription->onTrial())
+                        <a href="{{ route('user.plans.index') }}" class="btn btn-outline-primary">Change plan</a>
+                    @elseif (! in_array($subscription->status->value, ['pending', 'active']))
+                        <a href="{{ route('user.plans.index') }}" class="btn btn-primary">Browse plans</a>
+                    @endif
+                </div>
             </div>
         </div>
     @endif

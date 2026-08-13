@@ -219,6 +219,8 @@ Route::middleware(['auth', 'role:user'])
 
         Route::get('subscription', [UserSubscriptionController::class, 'show'])->name('subscription.show');
         Route::post('subscription/cancel', [UserSubscriptionController::class, 'cancel'])->name('subscription.cancel');
+        Route::get('subscription/switch/{plan}', [UserSubscriptionController::class, 'switchPreview'])->name('subscription.switch-preview');
+        Route::post('subscription/switch/{plan}', [UserSubscriptionController::class, 'switch'])->name('subscription.switch');
 
         Route::get('demo-access', [UserDemoAccessController::class, 'index'])->name('demo-access.index');
     });

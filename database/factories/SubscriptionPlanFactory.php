@@ -22,6 +22,10 @@ class SubscriptionPlanFactory extends Factory
             'description' => fake()->sentence(),
             'price' => fake()->randomFloat(2, 5, 99),
             'billing_interval' => BillingInterval::Monthly,
+            // Explicit rather than relying on the DB-level default (0) —
+            // that default never reflects onto this in-memory instance
+            // until refetched, same footgun UserFactory::role hit earlier.
+            'trial_days' => 0,
             'is_active' => true,
         ];
     }
@@ -34,5 +38,10 @@ class SubscriptionPlanFactory extends Factory
     public function inactive(): static
     {
         return $this->state(['is_active' => false]);
+    }
+
+    public function withTrial(int $days = 14): static
+    {
+        return $this->state(['trial_days' => $days]);
     }
 }

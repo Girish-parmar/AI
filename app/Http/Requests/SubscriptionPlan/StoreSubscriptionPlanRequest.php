@@ -21,6 +21,7 @@ class StoreSubscriptionPlanRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:2000'],
             'price' => ['required', 'numeric', 'min:0', 'max:99999.99'],
             'billing_interval' => ['required', Rule::enum(BillingInterval::class)],
+            'trial_days' => ['required', 'integer', 'min:0', 'max:365'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

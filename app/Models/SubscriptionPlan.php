@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'slug', 'description', 'price', 'billing_interval', 'is_active'])]
+#[Fillable(['name', 'slug', 'description', 'price', 'billing_interval', 'trial_days', 'is_active'])]
 class SubscriptionPlan extends Model
 {
     use HasFactory;
@@ -18,6 +18,7 @@ class SubscriptionPlan extends Model
         return [
             'price' => 'decimal:2',
             'billing_interval' => BillingInterval::class,
+            'trial_days' => 'integer',
             'is_active' => 'boolean',
         ];
     }
@@ -25,5 +26,10 @@ class SubscriptionPlan extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    public function hasTrial(): bool
+    {
+        return $this->trial_days > 0;
     }
 }
