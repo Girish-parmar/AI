@@ -3,6 +3,7 @@
 use App\Http\Controllers\Accounts\DashboardController as AccountsDashboardController;
 use App\Http\Controllers\Accounts\PayoutController as AccountsPayoutController;
 use App\Http\Controllers\Accounts\TransactionController as AccountsTransactionController;
+use App\Http\Controllers\Admin\AdvertisementController as AdminAdvertisementController;
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ScriptController as AdminScriptController;
@@ -11,12 +12,14 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Creator\AdvertisementController as CreatorAdvertisementController;
 use App\Http\Controllers\Creator\CourseController as CreatorCourseController;
 use App\Http\Controllers\Creator\DashboardController as CreatorDashboardController;
 use App\Http\Controllers\Creator\EarningsController as CreatorEarningsController;
 use App\Http\Controllers\Creator\ScriptController as CreatorScriptController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Monitoring\AdvertisementController as MonitoringAdvertisementController;
 use App\Http\Controllers\Monitoring\AuditLogController as MonitoringAuditLogController;
 use App\Http\Controllers\Monitoring\CourseController as MonitoringCourseController;
 use App\Http\Controllers\Monitoring\DashboardController as MonitoringDashboardController;
@@ -85,6 +88,10 @@ Route::middleware(['auth', 'role:admin,superadmin', 'audit'])
         Route::post('scripts/{script}/reject', [AdminScriptController::class, 'reject'])->name('scripts.reject');
 
         Route::resource('users', AdminUserController::class)->except(['show']);
+
+        Route::resource('advertisements', AdminAdvertisementController::class)->only(['index', 'edit', 'update', 'destroy']);
+        Route::post('advertisements/{advertisement}/approve', [AdminAdvertisementController::class, 'approve'])->name('advertisements.approve');
+        Route::post('advertisements/{advertisement}/reject', [AdminAdvertisementController::class, 'reject'])->name('advertisements.reject');
     });
 
 Route::middleware(['auth', 'role:monitoring', 'audit'])
@@ -95,6 +102,7 @@ Route::middleware(['auth', 'role:monitoring', 'audit'])
 
         Route::get('courses', [MonitoringCourseController::class, 'index'])->name('courses.index');
         Route::get('scripts', [MonitoringScriptController::class, 'index'])->name('scripts.index');
+        Route::get('advertisements', [MonitoringAdvertisementController::class, 'index'])->name('advertisements.index');
     });
 
 // Audit log viewer, shared by Monitoring and SuperAdmin.
@@ -116,6 +124,9 @@ Route::middleware(['auth', 'role:creator'])
 
         Route::resource('scripts', CreatorScriptController::class)->except(['show']);
         Route::post('scripts/{script}/submit', [CreatorScriptController::class, 'submit'])->name('scripts.submit');
+
+        Route::resource('advertisements', CreatorAdvertisementController::class)->except(['show']);
+        Route::post('advertisements/{advertisement}/submit', [CreatorAdvertisementController::class, 'submit'])->name('advertisements.submit');
 
         Route::get('earnings', [CreatorEarningsController::class, 'index'])->name('earnings.index');
     });
