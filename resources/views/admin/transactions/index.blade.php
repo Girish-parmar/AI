@@ -3,7 +3,7 @@
 @section('title', 'Purchases & Orders')
 
 @section('content')
-    <h1 class="h3 fw-bold mb-4">Purchases &amp; Orders <span class="badge text-bg-light text-body-secondary">View only</span></h1>
+    <h1 class="h3 fw-bold mb-4">Purchases &amp; Orders</h1>
 
     <form method="GET" class="mb-4 d-flex align-items-center gap-2">
         <label for="status" class="form-label mb-0 small text-body-secondary">Filter by status</label>
@@ -27,6 +27,7 @@
                         <th>Item</th>
                         <th>Amount</th>
                         <th>Status</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -48,6 +49,20 @@
                             </td>
                             <td>${{ number_format($transaction->amount, 2) }}</td>
                             <td><span class="badge {{ $transaction->status->badgeClass() }}">{{ $transaction->status->label() }}</span></td>
+                            <td class="text-end">
+                                @if ($transaction->status->value === 'pending')
+                                    <div class="d-inline-flex gap-2">
+                                        <form method="POST" action="{{ route('admin.transactions.succeed', $transaction) }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success">Mark succeeded</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('admin.transactions.fail', $transaction) }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-danger">Mark failed</button>
+                                        </form>
+                                    </div>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

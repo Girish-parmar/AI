@@ -78,8 +78,12 @@ class AdvertisementApprovalTest extends TestCase
         $this->actingAs($other)->delete("/creator/advertisements/{$ad->id}")->assertForbidden();
     }
 
-    public function test_monitoring_can_view_but_not_approve_advertisements(): void
+    public function test_monitoring_can_view_and_approve_advertisements_via_its_own_route_but_not_admins(): void
     {
+        // Advertising is one of Monitoring's exclusive-write domains (like
+        // Audit and Legal), so it gets full management via monitoring.* —
+        // but that's a separate route group from admin.*, so Monitoring
+        // still can't use Admin's own approve endpoint.
         $creator = User::factory()->create(['role' => Role::Creator]);
         $ad = Advertisement::factory()->create(['created_by' => $creator->id, 'status' => ContentStatus::Pending]);
         $ad->approvals()->create(['requested_by' => $creator->id, 'status' => ApprovalStatus::Pending]);
@@ -87,5 +91,24 @@ class AdvertisementApprovalTest extends TestCase
 
         $this->actingAs($monitoring)->get(route('monitoring.advertisements.index'))->assertStatus(200);
         $this->actingAs($monitoring)->post(route('admin.advertisements.approve', $ad))->assertForbidden();
+
+        $this->actingAs($monitoring)->post(route('monitoring.advertisements.approve', $ad));
+        $this->assertSame(ContentStatus::Approved, $ad->fresh()->status);
+    }
+
+    public function test_monitoring_can_edit_and_delete_advertisements(): void
+    {
+        $creator = User::factory()->create(['role' => Role::Creator]);
+        $ad = Advertisement::factory()->approved()->create(['created_by' => $creator->id]);
+        $monitoring = User::factory()->create(['role' => Role::Monitoring]);
+
+        $this->actingAs($monitoring)->put(route('monitoring.advertisements.update', $ad), [
+            'title' => 'Updated title',
+            'target_url' => $ad->target_url,
+        ]);
+        $this->assertSame('Updated title', $ad->fresh()->title);
+
+        $this->actingAs($monitoring)->delete(route('monitoring.advertisements.destroy', $ad));
+        $this->assertModelMissing($ad);
     }
 }

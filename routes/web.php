@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\Accounts\CourseController as AccountsCourseController;
 use App\Http\Controllers\Accounts\DashboardController as AccountsDashboardController;
 use App\Http\Controllers\Accounts\LegalDocumentController as AccountsLegalDocumentController;
 use App\Http\Controllers\Accounts\PayoutController as AccountsPayoutController;
+use App\Http\Controllers\Accounts\ScriptController as AccountsScriptController;
+use App\Http\Controllers\Accounts\SubscriptionPlanController as AccountsSubscriptionPlanController;
 use App\Http\Controllers\Accounts\TransactionController as AccountsTransactionController;
 use App\Http\Controllers\Admin\AdvertisementController as AdminAdvertisementController;
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
@@ -11,6 +14,7 @@ use App\Http\Controllers\Admin\DemoAccessController as AdminDemoAccessController
 use App\Http\Controllers\Admin\LegalDocumentController as AdminLegalDocumentController;
 use App\Http\Controllers\Admin\PayoutController as AdminPayoutController;
 use App\Http\Controllers\Admin\ScriptController as AdminScriptController;
+use App\Http\Controllers\Admin\SubscriptionPlanController as AdminSubscriptionPlanController;
 use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -29,9 +33,11 @@ use App\Http\Controllers\Monitoring\AdvertisementController as MonitoringAdverti
 use App\Http\Controllers\Monitoring\AuditLogController as MonitoringAuditLogController;
 use App\Http\Controllers\Monitoring\CourseController as MonitoringCourseController;
 use App\Http\Controllers\Monitoring\DashboardController as MonitoringDashboardController;
+use App\Http\Controllers\Monitoring\DemoAccessController as MonitoringDemoAccessController;
 use App\Http\Controllers\Monitoring\LegalDocumentController as MonitoringLegalDocumentController;
 use App\Http\Controllers\Monitoring\PayoutController as MonitoringPayoutController;
 use App\Http\Controllers\Monitoring\ScriptController as MonitoringScriptController;
+use App\Http\Controllers\Monitoring\SubscriptionPlanController as MonitoringSubscriptionPlanController;
 use App\Http\Controllers\Monitoring\TransactionController as MonitoringTransactionController;
 use App\Http\Controllers\Monitoring\UserController as MonitoringUserController;
 use App\Http\Controllers\NotificationController;
@@ -116,9 +122,14 @@ Route::middleware(['auth', 'role:admin,superadmin', 'audit'])
 
         Route::get('legal-documents', [AdminLegalDocumentController::class, 'index'])->name('legal-documents.index');
 
-        // View-only: Admin gets "View" on Purchases/Orders and Finance per
-        // the plan, not the Full reconcile/payout actions Accounts has.
+        Route::resource('subscription-plans', AdminSubscriptionPlanController::class)->except(['show']);
+
+        // Full per the plan: Admin gets the same reconcile actions Accounts
+        // has on Purchases/Orders, but only "View" on Finance & Payouts.
         Route::get('transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
+        Route::post('transactions/{transaction}/succeed', [AdminTransactionController::class, 'succeed'])->name('transactions.succeed');
+        Route::post('transactions/{transaction}/fail', [AdminTransactionController::class, 'fail'])->name('transactions.fail');
+
         Route::get('payouts', [AdminPayoutController::class, 'index'])->name('payouts.index');
     });
 
@@ -130,7 +141,13 @@ Route::middleware(['auth', 'role:monitoring', 'audit'])
 
         Route::get('courses', [MonitoringCourseController::class, 'index'])->name('courses.index');
         Route::get('scripts', [MonitoringScriptController::class, 'index'])->name('scripts.index');
-        Route::get('advertisements', [MonitoringAdvertisementController::class, 'index'])->name('advertisements.index');
+
+        // Full: Advertising is one of Monitoring's exclusive-write domains
+        // (alongside Audit and Legal), matching the plan's "Full" cell —
+        // not view-only like Admin's "Approve" cell on the same row.
+        Route::resource('advertisements', MonitoringAdvertisementController::class)->only(['index', 'edit', 'update', 'destroy']);
+        Route::post('advertisements/{advertisement}/approve', [MonitoringAdvertisementController::class, 'approve'])->name('advertisements.approve');
+        Route::post('advertisements/{advertisement}/reject', [MonitoringAdvertisementController::class, 'reject'])->name('advertisements.reject');
 
         // View-only, matching the plan's "Monitoring gets view rights equal
         // to Admin across all modules" — these mirror the admin.* views
@@ -138,6 +155,8 @@ Route::middleware(['auth', 'role:monitoring', 'audit'])
         Route::get('users', [MonitoringUserController::class, 'index'])->name('users.index');
         Route::get('transactions', [MonitoringTransactionController::class, 'index'])->name('transactions.index');
         Route::get('payouts', [MonitoringPayoutController::class, 'index'])->name('payouts.index');
+        Route::get('subscription-plans', [MonitoringSubscriptionPlanController::class, 'index'])->name('subscription-plans.index');
+        Route::get('demo-access', [MonitoringDemoAccessController::class, 'index'])->name('demo-access.index');
     });
 
 // Audit log viewer, shared by Admin, Monitoring, and SuperAdmin. Already a
@@ -221,4 +240,11 @@ Route::middleware(['auth', 'role:accounts,superadmin', 'audit'])
         Route::post('payouts/{payout}/fail', [AccountsPayoutController::class, 'fail'])->name('payouts.fail');
 
         Route::get('legal-documents', [AccountsLegalDocumentController::class, 'index'])->name('legal-documents.index');
+
+        // View-only, per the plan's "View only" / "View/manage billing"
+        // cells — Accounts sees plan definitions and content but doesn't
+        // edit them; billing itself is handled via Purchases/Orders above.
+        Route::get('subscription-plans', [AccountsSubscriptionPlanController::class, 'index'])->name('subscription-plans.index');
+        Route::get('courses', [AccountsCourseController::class, 'index'])->name('courses.index');
+        Route::get('scripts', [AccountsScriptController::class, 'index'])->name('scripts.index');
     });
