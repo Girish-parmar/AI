@@ -25,6 +25,7 @@
             <a class="navbar-brand fw-semibold" href="{{ route('home') }}">{{ config('app.name') }}</a>
             <span class="navbar-text text-white-50 d-none d-md-inline">{{ $role->label() }} area</span>
             <div class="d-flex align-items-center gap-3 ms-auto">
+                @include('partials.notifications-bell')
                 <span class="text-white-50 small d-none d-sm-inline">{{ auth()->user()->name }}</span>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

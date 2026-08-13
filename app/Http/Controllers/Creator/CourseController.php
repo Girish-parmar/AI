@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Creator;
 use App\Enums\ApprovalStatus;
 use App\Enums\ContentStatus;
 use App\Http\Controllers\Controller;
+use App\Enums\Role;
 use App\Http\Requests\Content\StoreContentRequest;
 use App\Http\Requests\Content\UpdateContentRequest;
 use App\Models\Course;
+use App\Models\User;
+use App\Notifications\ContentSubmittedForReview;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 
 class CourseController extends Controller
@@ -73,6 +77,9 @@ class CourseController extends Controller
             'requested_by' => $request->user()->id,
             'status' => ApprovalStatus::Pending,
         ]);
+
+        $reviewers = User::whereIn('role', [Role::Admin, Role::SuperAdmin])->get();
+        Notification::send($reviewers, new ContentSubmittedForReview('course', $course->title, $request->user()->name));
 
         return redirect()->route('creator.courses.index')->with('status', 'Course submitted for review.');
     }

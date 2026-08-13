@@ -7,6 +7,7 @@ use App\Enums\ContentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Content\UpdateContentRequest;
 use App\Models\Course;
+use App\Notifications\ContentReviewed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -60,6 +61,8 @@ class CourseController extends Controller
 
         $course->update(['status' => ContentStatus::Approved]);
 
+        $course->creator->notify(new ContentReviewed('course', $course->title, $course->id, ApprovalStatus::Approved, null));
+
         return back()->with('status', "\"{$course->title}\" approved.");
     }
 
@@ -80,6 +83,8 @@ class CourseController extends Controller
         ]);
 
         $course->update(['status' => ContentStatus::Rejected]);
+
+        $course->creator->notify(new ContentReviewed('course', $course->title, $course->id, ApprovalStatus::Rejected, $validated['notes'] ?? null));
 
         return back()->with('status', "\"{$course->title}\" rejected.");
     }

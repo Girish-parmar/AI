@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Creator;
 
 use App\Enums\ApprovalStatus;
 use App\Enums\ContentStatus;
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Advertisement\StoreAdvertisementRequest;
 use App\Http\Requests\Advertisement\UpdateAdvertisementRequest;
 use App\Models\Advertisement;
+use App\Models\User;
+use App\Notifications\ContentSubmittedForReview;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 
 class AdvertisementController extends Controller
@@ -73,6 +77,9 @@ class AdvertisementController extends Controller
             'requested_by' => $request->user()->id,
             'status' => ApprovalStatus::Pending,
         ]);
+
+        $reviewers = User::whereIn('role', [Role::Admin, Role::SuperAdmin])->get();
+        Notification::send($reviewers, new ContentSubmittedForReview('advertisement', $advertisement->title, $request->user()->name));
 
         return redirect()->route('creator.advertisements.index')->with('status', 'Advertisement submitted for review.');
     }

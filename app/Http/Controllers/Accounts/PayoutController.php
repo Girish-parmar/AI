@@ -11,6 +11,7 @@ use App\Models\Payout;
 use App\Models\Purchase;
 use App\Models\Script;
 use App\Models\User;
+use App\Notifications\PayoutStatusUpdated;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -66,6 +67,8 @@ class PayoutController extends Controller
 
         $payout->update(['status' => PayoutStatus::Paid, 'paid_at' => now()]);
 
+        $payout->creator->notify(new PayoutStatusUpdated(number_format($payout->amount, 2), PayoutStatus::Paid));
+
         return back()->with('status', 'Payout marked as paid.');
     }
 
@@ -74,6 +77,8 @@ class PayoutController extends Controller
         abort_unless($payout->status === PayoutStatus::Pending, 422, 'Only pending payouts can be marked failed.');
 
         $payout->update(['status' => PayoutStatus::Failed]);
+
+        $payout->creator->notify(new PayoutStatusUpdated(number_format($payout->amount, 2), PayoutStatus::Failed));
 
         return back()->with('status', 'Payout marked as failed.');
     }
