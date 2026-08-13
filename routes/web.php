@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Accounts\DashboardController as AccountsDashboardController;
+use App\Http\Controllers\Accounts\TransactionController as AccountsTransactionController;
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ScriptController as AdminScriptController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Creator\CourseController as CreatorCourseController;
 use App\Http\Controllers\Creator\DashboardController as CreatorDashboardController;
+use App\Http\Controllers\Creator\EarningsController as CreatorEarningsController;
 use App\Http\Controllers\Creator\ScriptController as CreatorScriptController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
@@ -20,7 +22,9 @@ use App\Http\Controllers\Monitoring\ScriptController as MonitoringScriptControll
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\User\CourseController as UserCourseController;
 use App\Http\Controllers\User\DashboardController as UserDashboardController;
+use App\Http\Controllers\User\PurchaseController as UserPurchaseController;
 use App\Http\Controllers\User\ScriptController as UserScriptController;
+use App\Http\Controllers\User\SubscriptionController as UserSubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -108,6 +112,8 @@ Route::middleware(['auth', 'role:creator'])
 
         Route::resource('scripts', CreatorScriptController::class)->except(['show']);
         Route::post('scripts/{script}/submit', [CreatorScriptController::class, 'submit'])->name('scripts.submit');
+
+        Route::get('earnings', [CreatorEarningsController::class, 'index'])->name('earnings.index');
     });
 
 Route::middleware(['auth', 'role:user'])
@@ -118,14 +124,29 @@ Route::middleware(['auth', 'role:user'])
 
         Route::get('courses', [UserCourseController::class, 'index'])->name('courses.index');
         Route::get('courses/{course}', [UserCourseController::class, 'show'])->name('courses.show');
+        Route::post('courses/{course}/purchase', [UserCourseController::class, 'purchase'])->name('courses.purchase');
 
         Route::get('scripts', [UserScriptController::class, 'index'])->name('scripts.index');
         Route::get('scripts/{script}', [UserScriptController::class, 'show'])->name('scripts.show');
+        Route::post('scripts/{script}/purchase', [UserScriptController::class, 'purchase'])->name('scripts.purchase');
+
+        Route::get('purchases', [UserPurchaseController::class, 'index'])->name('purchases.index');
+
+        Route::get('plans', [UserSubscriptionController::class, 'plans'])->name('plans.index');
+        Route::post('plans/{plan}/subscribe', [UserSubscriptionController::class, 'subscribe'])->name('plans.subscribe');
+
+        Route::get('subscription', [UserSubscriptionController::class, 'show'])->name('subscription.show');
+        Route::post('subscription/cancel', [UserSubscriptionController::class, 'cancel'])->name('subscription.cancel');
     });
 
-Route::middleware(['auth', 'role:accounts', 'audit'])
+// Purchase/subscription reconciliation, shared by Accounts and SuperAdmin.
+Route::middleware(['auth', 'role:accounts,superadmin', 'audit'])
     ->prefix('accounts')
     ->name('accounts.')
     ->group(function () {
         Route::get('dashboard', [AccountsDashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('transactions', [AccountsTransactionController::class, 'index'])->name('transactions.index');
+        Route::post('transactions/{transaction}/succeed', [AccountsTransactionController::class, 'succeed'])->name('transactions.succeed');
+        Route::post('transactions/{transaction}/fail', [AccountsTransactionController::class, 'fail'])->name('transactions.fail');
     });

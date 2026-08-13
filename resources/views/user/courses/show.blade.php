@@ -11,6 +11,21 @@
             <h1 class="h3 fw-bold">{{ $course->title }}</h1>
             <p class="text-body-secondary mb-3">by {{ $course->creator->name }}</p>
             <p class="fs-4 fw-bold mb-3">${{ number_format($course->price, 2) }}</p>
+
+            @if ($purchase)
+                <div class="alert {{ $purchase->status->value === 'completed' ? 'alert-success' : 'alert-warning' }}">
+                    Purchase status: <strong>{{ $purchase->status->label() }}</strong>
+                    @if ($purchase->status->value === 'pending')
+                        &mdash; awaiting payment confirmation.
+                    @endif
+                </div>
+            @else
+                <form method="POST" action="{{ route('user.courses.purchase', $course) }}" class="mb-3">
+                    @csrf
+                    <button type="submit" class="btn btn-primary">Buy this course</button>
+                </form>
+            @endif
+
             <p style="white-space: pre-line;">{{ $course->description }}</p>
         </div>
     </div>

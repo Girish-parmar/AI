@@ -48,7 +48,7 @@ enum Role: string
                 ['label' => 'Courses & Scripts', 'available' => true, 'route' => 'admin.courses.index'],
                 ['label' => 'Approvals', 'available' => false],
                 ['label' => 'Subscriptions', 'available' => false],
-                ['label' => 'Purchases & Orders', 'available' => false],
+                ['label' => 'Purchases & Orders', 'available' => true, 'route' => 'accounts.transactions.index'],
                 ['label' => 'User Management', 'available' => false],
                 ['label' => 'Audit Logs', 'available' => true, 'route' => 'monitoring.audit-logs.index'],
                 ['label' => 'Legal & Compliance', 'available' => false],
@@ -77,14 +77,14 @@ enum Role: string
                 ['label' => 'Dashboard', 'available' => true, 'route' => 'creator.dashboard'],
                 ['label' => 'My Courses', 'available' => true, 'route' => 'creator.courses.index'],
                 ['label' => 'My Scripts', 'available' => true, 'route' => 'creator.scripts.index'],
-                ['label' => 'Earnings', 'available' => false],
+                ['label' => 'Earnings', 'available' => true, 'route' => 'creator.earnings.index'],
             ],
             self::User => [
                 ['label' => 'Dashboard', 'available' => true, 'route' => 'user.dashboard'],
                 ['label' => 'Browse Courses', 'available' => true, 'route' => 'user.courses.index'],
                 ['label' => 'Browse Scripts', 'available' => true, 'route' => 'user.scripts.index'],
-                ['label' => 'My Subscriptions', 'available' => false],
-                ['label' => 'My Purchases', 'available' => false],
+                ['label' => 'My Subscriptions', 'available' => true, 'route' => 'user.subscription.show'],
+                ['label' => 'My Purchases', 'available' => true, 'route' => 'user.purchases.index'],
                 ['label' => 'Demo Content', 'available' => false],
             ],
             self::Accounts => [
@@ -92,7 +92,7 @@ enum Role: string
                 ['label' => 'Invoices', 'available' => false],
                 ['label' => 'Payouts', 'available' => false],
                 ['label' => 'Revenue Reports', 'available' => false],
-                ['label' => 'Purchases & Orders', 'available' => false, 'note' => 'View only'],
+                ['label' => 'Purchases & Orders', 'available' => true, 'route' => 'accounts.transactions.index'],
             ],
         };
     }

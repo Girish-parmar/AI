@@ -76,9 +76,9 @@ class DatabaseSeeder extends Seeder
             $creator
         );
 
-        Script::factory()->approved()->create(['creator_id' => $creator->id, 'title' => 'Log Parser']);
+        $approvedScript = Script::factory()->approved()->create(['creator_id' => $creator->id, 'title' => 'Log Parser']);
 
-        SubscriptionPlan::factory()->create(['name' => 'Basic Plan', 'slug' => 'basic', 'price' => 9.99]);
+        $basicPlan = SubscriptionPlan::factory()->create(['name' => 'Basic Plan', 'slug' => 'basic', 'price' => 9.99]);
         $proPlan = SubscriptionPlan::factory()->create(['name' => 'Pro Plan', 'slug' => 'pro', 'price' => 29.99]);
         SubscriptionPlan::factory()->inactive()->create(['name' => 'Legacy Plan', 'slug' => 'legacy', 'price' => 4.99]);
 
@@ -102,6 +102,41 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->paid($subscriber, $purchase, $purchase->price);
+
+        // A second, still-pending purchase for the same subscriber, and a
+        // separate user with a pending subscription, so the Accounts
+        // reconciliation queue has something to review out of the box.
+        $pendingPurchase = Purchase::create([
+            'user_id' => $subscriber->id,
+            'purchasable_type' => Script::class,
+            'purchasable_id' => $approvedScript->id,
+            'price' => $approvedScript->price,
+            'status' => PurchaseStatus::Pending,
+        ]);
+        $pendingPurchase->transactions()->create([
+            'user_id' => $subscriber->id,
+            'amount' => $pendingPurchase->price,
+            'gateway' => 'manual',
+            'status' => TransactionStatus::Pending,
+        ]);
+
+        $pendingSubscriber = User::factory()->create([
+            'name' => 'Pending Subscriber',
+            'email' => 'pending-subscriber@example.com',
+            'role' => Role::User,
+        ]);
+        $pendingSubscription = Subscription::create([
+            'user_id' => $pendingSubscriber->id,
+            'subscription_plan_id' => $basicPlan->id,
+            'status' => SubscriptionStatus::Pending,
+            'starts_at' => now(),
+        ]);
+        $pendingSubscription->transactions()->create([
+            'user_id' => $pendingSubscriber->id,
+            'amount' => $basicPlan->price,
+            'gateway' => 'manual',
+            'status' => TransactionStatus::Pending,
+        ]);
     }
 
     private function paid(User $user, Subscription|Purchase $payable, string $amount): void
