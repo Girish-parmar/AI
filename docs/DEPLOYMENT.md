@@ -124,6 +124,42 @@ MAIL_FROM_NAME="${APP_NAME}"
 
 (Create the `noreply@your-domain.com` mailbox first, in hPanel → Emails.)
 
+### Payment details (required — the site cannot collect money without them)
+
+There is **no payment gateway integrated**. Orders are settled out of band:
+a buyer places an order, is shown your bank/UPI details and a reference
+code, transfers the money themselves, and someone on the Accounts side
+confirms it by hand in **Purchases & Orders**.
+
+That only works if these are filled in — buyers are shown exactly what you
+put here:
+
+```ini
+PAYMENT_CURRENCY=INR
+PAYMENT_CURRENCY_SYMBOL=₹
+PAYMENT_ACCOUNT_NAME="Your Company Ltd"
+PAYMENT_BANK_NAME="Your Bank"
+PAYMENT_ACCOUNT_NUMBER=50100123456789
+PAYMENT_IFSC=ABCD0001234
+PAYMENT_UPI_ID=you@yourbank
+PAYMENT_NOTES="Payments are confirmed within one business day."
+```
+
+**Quote any value containing spaces.** An unquoted space breaks dotenv
+parsing and the whole site fails to boot — not just this feature.
+
+Leave a field blank and it's simply omitted from what buyers see, so a
+UPI-only or bank-only setup both render cleanly. Leave *all* of them blank
+and buyers are told payment instructions are being finalised rather than
+being shown an empty box — safe, but nobody can pay you.
+
+`PAYMENT_CURRENCY_SYMBOL` drives every amount displayed across the site, so
+set it to match the account you're actually collecting into.
+
+Each pending transaction gets a reference (`AWK-000123`) shown to the buyer
+and in the Accounts reconcile queue — that's how an incoming transfer gets
+matched to an order. Change the `AWK` part with `PAYMENT_REFERENCE_PREFIX`.
+
 ## 5. Run migrations
 
 ```bash
@@ -299,6 +335,9 @@ live site:
 - [ ] Database user has strong, unique credentials (not reused elsewhere)
 - [ ] SSL is on and HTTPS is enforced
 - [ ] Mail is configured with real credentials — password reset silently does nothing useful without it
+- [ ] Payment details (`PAYMENT_*`) filled in with your real bank/UPI account, values containing spaces quoted — buyers are shown these verbatim and cannot pay you without them
+- [ ] `PAYMENT_CURRENCY_SYMBOL` matches the account you're collecting into
+- [ ] Placed one test order end to end: buyer sees the reference, Accounts sees the same reference in Purchases & Orders, marking it succeeded grants access
 
 **Backups & monitoring**
 - [ ] Cron job from step 7 is active (`hPanel → Advanced → Cron Jobs`)

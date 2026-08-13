@@ -24,7 +24,7 @@
                     @foreach ($plans as $plan)
                         <tr>
                             <td>{{ $plan->name }}</td>
-                            <td>${{ number_format($plan->price, 2) }}</td>
+                            <td>{{ money($plan->price) }}</td>
                             <td>{{ $plan->billing_interval->label() }}</td>
                             <td>{{ $plan->hasTrial() ? "{$plan->trial_days} days" : '—' }}</td>
                             <td>{{ $plan->subscriptions_count }}</td>

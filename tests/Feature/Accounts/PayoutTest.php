@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\Payout;
 use App\Models\Purchase;
 use App\Models\User;
+use App\Notifications\PayoutStatusUpdated;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -96,7 +97,7 @@ class PayoutTest extends TestCase
 
         $this->assertSame(PayoutStatus::Paid, $payout->fresh()->status);
         $this->assertNotNull($payout->fresh()->paid_at);
-        Notification::assertSentTo($creator, \App\Notifications\PayoutStatusUpdated::class);
+        Notification::assertSentTo($creator, PayoutStatusUpdated::class);
     }
 
     public function test_accounts_can_mark_a_pending_payout_failed(): void

@@ -28,4 +28,15 @@ class Transaction extends Model
     {
         return $this->morphTo();
     }
+
+    /**
+     * The code a buyer quotes when paying out of band, and the one
+     * Accounts matches an incoming transfer against. Derived from the
+     * primary key rather than stored, so it's stable for the life of the
+     * transaction and can't collide or drift out of sync.
+     */
+    public function reference(): string
+    {
+        return config('payments.reference_prefix').'-'.str_pad((string) $this->id, 6, '0', STR_PAD_LEFT);
+    }
 }

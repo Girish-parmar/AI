@@ -7,6 +7,8 @@ use App\Enums\ContentStatus;
 use App\Enums\Role;
 use App\Models\Course;
 use App\Models\User;
+use App\Notifications\ContentReviewed;
+use App\Notifications\ContentSubmittedForReview;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -54,7 +56,7 @@ class CourseApprovalTest extends TestCase
             'status' => ApprovalStatus::Pending->value,
         ]);
 
-        Notification::assertSentTo([$admin, $superadmin], \App\Notifications\ContentSubmittedForReview::class);
+        Notification::assertSentTo([$admin, $superadmin], ContentSubmittedForReview::class);
     }
 
     public function test_a_pending_or_approved_course_cannot_be_resubmitted(): void
@@ -102,7 +104,7 @@ class CourseApprovalTest extends TestCase
         $this->assertSame(ContentStatus::Approved, $course->fresh()->status);
         $this->assertSame(ApprovalStatus::Approved, $approval->fresh()->status);
         $this->assertSame($admin->id, $approval->fresh()->reviewed_by);
-        Notification::assertSentTo($creator, \App\Notifications\ContentReviewed::class);
+        Notification::assertSentTo($creator, ContentReviewed::class);
     }
 
     public function test_admin_can_reject_a_pending_course_with_notes(): void
@@ -122,7 +124,7 @@ class CourseApprovalTest extends TestCase
         $this->assertSame(ApprovalStatus::Rejected, $approval->fresh()->status);
         $this->assertSame('Needs more detail.', $approval->fresh()->notes);
 
-        Notification::assertSentTo($creator, \App\Notifications\ContentReviewed::class, function ($notification) use ($creator) {
+        Notification::assertSentTo($creator, ContentReviewed::class, function ($notification) use ($creator) {
             return str_contains($notification->toArray($creator)['message'], 'rejected');
         });
     }

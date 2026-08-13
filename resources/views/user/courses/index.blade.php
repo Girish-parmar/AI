@@ -21,7 +21,7 @@
                             </h2>
                             <p class="text-body-secondary small flex-grow-1">{{ \Illuminate\Support\Str::limit($course->description, 120) }}</p>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-bold">${{ number_format($course->price, 2) }}</span>
+                                <span class="fw-bold">{{ money($course->price) }}</span>
                                 <span class="text-body-secondary small">by {{ $course->creator->name }}</span>
                             </div>
                         </div>

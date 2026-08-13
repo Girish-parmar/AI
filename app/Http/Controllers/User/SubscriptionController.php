@@ -77,7 +77,16 @@ class SubscriptionController extends Controller
             ->latest('id')
             ->first();
 
-        return view('user.subscription.show', ['subscription' => $subscription]);
+        return view('user.subscription.show', [
+            'subscription' => $subscription,
+            // Settled out of band, so an unpaid charge needs the
+            // how-to-pay panel and its reference shown alongside it.
+            'pendingTransaction' => $subscription
+                ?->transactions()
+                ->where('status', TransactionStatus::Pending)
+                ->latest('id')
+                ->first(),
+        ]);
     }
 
     public function cancel(Request $request): RedirectResponse
@@ -122,10 +131,10 @@ class SubscriptionController extends Controller
                 'status' => TransactionStatus::Pending,
             ]);
 
-            $amount = number_format($proration['amount_due'], 2);
+            $amount = money($proration['amount_due']);
 
             return redirect()->route('user.subscription.show')
-                ->with('status', "Switched from \"{$oldPlanName}\" to \"{$plan->name}\" — a prorated charge of \${$amount} is pending payment confirmation.");
+                ->with('status', "Switched from \"{$oldPlanName}\" to \"{$plan->name}\" — a prorated charge of {$amount} is pending payment confirmation.");
         }
 
         return redirect()->route('user.subscription.show')

@@ -23,9 +23,9 @@
                     @foreach ($summaries as $summary)
                         <tr>
                             <td>{{ $summary['creator']->name }}</td>
-                            <td>${{ number_format($summary['earned'], 2) }}</td>
-                            <td>${{ number_format($summary['paidOut'], 2) }}</td>
-                            <td class="fw-semibold">${{ number_format($summary['outstanding'], 2) }}</td>
+                            <td>{{ money($summary['earned']) }}</td>
+                            <td>{{ money($summary['paidOut']) }}</td>
+                            <td class="fw-semibold">{{ money($summary['outstanding']) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -51,7 +51,7 @@
                     @foreach ($payouts as $payout)
                         <tr>
                             <td>{{ $payout->creator->name }}</td>
-                            <td>${{ number_format($payout->amount, 2) }}</td>
+                            <td>{{ money($payout->amount) }}</td>
                             <td><span class="badge {{ $payout->status->badgeClass() }}">{{ $payout->status->label() }}</span></td>
                             <td>{{ $payout->created_at->format('Y-m-d') }}</td>
                         </tr>

@@ -5,8 +5,8 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
@@ -58,7 +58,7 @@ class PasswordResetTest extends TestCase
             ]);
 
             $response->assertRedirect(route('login'));
-            $this->assertTrue(\Illuminate\Support\Facades\Hash::check('new-strong-password', $user->fresh()->password));
+            $this->assertTrue(Hash::check('new-strong-password', $user->fresh()->password));
 
             return true;
         });
@@ -88,7 +88,7 @@ class PasswordResetTest extends TestCase
             ]);
 
             $response->assertSessionHasErrors('email');
-            $this->assertTrue(\Illuminate\Support\Facades\Hash::check('first-new-password', $user->fresh()->password));
+            $this->assertTrue(Hash::check('first-new-password', $user->fresh()->password));
 
             return true;
         });

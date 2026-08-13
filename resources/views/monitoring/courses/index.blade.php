@@ -37,7 +37,7 @@
                             <td>{{ $course->title }}</td>
                             <td>{{ $course->creator->name }}</td>
                             <td>{{ $course->category }}</td>
-                            <td>${{ number_format($course->price, 2) }}</td>
+                            <td>{{ money($course->price) }}</td>
                             <td><span class="badge {{ $course->status->badgeClass() }}">{{ $course->status->label() }}</span></td>
                         </tr>
                     @endforeach

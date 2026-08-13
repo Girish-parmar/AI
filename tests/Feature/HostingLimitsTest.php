@@ -8,7 +8,9 @@ use App\Models\LegalDocument;
 use App\Models\User;
 use App\Notifications\DatabaseSizeWarning;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class HostingLimitsTest extends TestCase
@@ -35,8 +37,8 @@ class HostingLimitsTest extends TestCase
         $user = User::factory()->create(['role' => Role::User]);
 
         $insert = function (?string $readAt, int $ageDays) use ($user): string {
-            $id = (string) \Illuminate\Support\Str::uuid();
-            \Illuminate\Support\Facades\DB::table('notifications')->insert([
+            $id = (string) Str::uuid();
+            DB::table('notifications')->insert([
                 'id' => $id,
                 'type' => 'App\\Notifications\\Test',
                 'notifiable_type' => User::class,

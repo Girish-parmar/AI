@@ -22,7 +22,7 @@
                         <div class="card-body d-flex flex-column">
                             <h2 class="h5 fw-semibold">{{ $plan->name }}</h2>
                             <p class="fs-4 fw-bold">
-                                ${{ number_format($plan->price, 2) }}
+                                {{ money($plan->price) }}
                                 <span class="fs-6 fw-normal text-body-secondary">/ {{ $plan->billing_interval->label() }}</span>
                             </p>
                             @if ($plan->hasTrial())

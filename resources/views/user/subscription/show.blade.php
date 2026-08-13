@@ -5,6 +5,10 @@
 @section('content')
     <h1 class="h3 fw-bold mb-4">My Subscription</h1>
 
+    @if ($pendingTransaction)
+        @include('partials.payment-instructions', ['transaction' => $pendingTransaction])
+    @endif
+
     @if (! $subscription)
         <p class="text-body-secondary mb-3">You don't have a subscription yet.</p>
         <a href="{{ route('user.plans.index') }}" class="btn btn-primary">Browse plans</a>
@@ -13,7 +17,7 @@
             <div class="card-body">
                 <h2 class="h5 fw-semibold">{{ $subscription->plan->name }}</h2>
                 <p class="text-body-secondary">
-                    ${{ number_format($subscription->plan->price, 2) }} / {{ $subscription->plan->billing_interval->label() }}
+                    {{ money($subscription->plan->price) }} / {{ $subscription->plan->billing_interval->label() }}
                 </p>
                 <p>
                     Status:
