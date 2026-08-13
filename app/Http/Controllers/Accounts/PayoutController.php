@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Notifications\PayoutStatusUpdated;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class PayoutController extends Controller
@@ -43,14 +44,23 @@ class PayoutController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'creator_id' => ['required', 'exists:users,id'],
+            // Not just "any user" — the outstanding-balance math below
+            // (earnedFor/paidOutFor) is meaningless for a non-Creator, and
+            // without this a payout could be recorded against one anyway.
+            'creator_id' => ['required', Rule::exists('users', 'id')->where('role', Role::Creator->value)],
             'amount' => ['required', 'numeric', 'min:0.01'],
         ]);
 
         $creator = User::findOrFail($validated['creator_id']);
         $outstanding = $this->earnedFor($creator) - $this->paidOutFor($creator);
 
-        abort_if($validated['amount'] > $outstanding, 422, 'Payout amount cannot exceed the outstanding balance.');
+        // Compared in integer cents, not raw floats — a payout decision is
+        // exactly the kind of comparison where float representation error
+        // must not be able to nudge the result either direction.
+        $outstandingCents = (int) round($outstanding * 100);
+        $amountCents = (int) round($validated['amount'] * 100);
+
+        abort_if($amountCents > $outstandingCents, 422, 'Payout amount cannot exceed the outstanding balance.');
 
         Payout::create([
             'creator_id' => $creator->id,

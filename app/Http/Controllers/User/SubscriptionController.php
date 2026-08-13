@@ -7,8 +7,10 @@ use App\Enums\TransactionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class SubscriptionController extends Controller
@@ -30,44 +32,53 @@ class SubscriptionController extends Controller
     {
         abort_unless($plan->is_active, 404);
 
-        $hasOpenSubscription = Subscription::where('user_id', $request->user()->id)
-            ->whereIn('status', [SubscriptionStatus::Pending, SubscriptionStatus::Active])
-            ->exists();
+        // The exists-check-then-create below is otherwise a classic race:
+        // two near-simultaneous requests (a double-click) can both pass the
+        // check before either has written a row. Locking the user's own
+        // row for the transaction serializes their requests — the second
+        // one re-runs the check only after the first has committed.
+        return DB::transaction(function () use ($request, $plan) {
+            User::whereKey($request->user()->id)->lockForUpdate()->first();
 
-        abort_if($hasOpenSubscription, 422, 'You already have a pending or active subscription.');
+            $hasOpenSubscription = Subscription::where('user_id', $request->user()->id)
+                ->whereIn('status', [SubscriptionStatus::Pending, SubscriptionStatus::Active])
+                ->exists();
 
-        if ($plan->hasTrial()) {
-            $trialEndsAt = now()->addDays($plan->trial_days);
+            abort_if($hasOpenSubscription, 422, 'You already have a pending or active subscription.');
 
-            Subscription::create([
+            if ($plan->hasTrial()) {
+                $trialEndsAt = now()->addDays($plan->trial_days);
+
+                Subscription::create([
+                    'user_id' => $request->user()->id,
+                    'subscription_plan_id' => $plan->id,
+                    'status' => SubscriptionStatus::Active,
+                    'starts_at' => now(),
+                    'trial_ends_at' => $trialEndsAt,
+                    'current_period_ends_at' => $trialEndsAt,
+                ]);
+
+                return redirect()->route('user.subscription.show')
+                    ->with('status', "Your {$plan->trial_days}-day free trial of \"{$plan->name}\" has started — nothing charged yet.");
+            }
+
+            $subscription = Subscription::create([
                 'user_id' => $request->user()->id,
                 'subscription_plan_id' => $plan->id,
-                'status' => SubscriptionStatus::Active,
+                'status' => SubscriptionStatus::Pending,
                 'starts_at' => now(),
-                'trial_ends_at' => $trialEndsAt,
-                'current_period_ends_at' => $trialEndsAt,
+            ]);
+
+            $subscription->transactions()->create([
+                'user_id' => $request->user()->id,
+                'amount' => $plan->price,
+                'gateway' => 'manual',
+                'status' => TransactionStatus::Pending,
             ]);
 
             return redirect()->route('user.subscription.show')
-                ->with('status', "Your {$plan->trial_days}-day free trial of \"{$plan->name}\" has started — nothing charged yet.");
-        }
-
-        $subscription = Subscription::create([
-            'user_id' => $request->user()->id,
-            'subscription_plan_id' => $plan->id,
-            'status' => SubscriptionStatus::Pending,
-            'starts_at' => now(),
-        ]);
-
-        $subscription->transactions()->create([
-            'user_id' => $request->user()->id,
-            'amount' => $plan->price,
-            'gateway' => 'manual',
-            'status' => TransactionStatus::Pending,
-        ]);
-
-        return redirect()->route('user.subscription.show')
-            ->with('status', "Subscribed to \"{$plan->name}\" — pending payment confirmation.");
+                ->with('status', "Subscribed to \"{$plan->name}\" — pending payment confirmation.");
+        });
     }
 
     public function show(Request $request): View

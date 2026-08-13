@@ -9,8 +9,10 @@ use App\Http\Controllers\Controller;
 use App\Models\DemoAccess;
 use App\Models\Purchase;
 use App\Models\Script;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ScriptController extends Controller
@@ -41,6 +43,10 @@ class ScriptController extends Controller
         return view('user.scripts.show', [
             'script' => $script->load('creator'),
             'purchase' => $purchase,
+            // A failed/refunded purchase is shown but isn't blocking — only
+            // an open (pending) or already-completed one is, matching what
+            // purchase() below actually enforces.
+            'canPurchase' => ! $purchase || ! in_array($purchase->status, [PurchaseStatus::Pending, PurchaseStatus::Completed], true),
             'demoAccess' => $demoAccess,
         ]);
     }
@@ -49,28 +55,37 @@ class ScriptController extends Controller
     {
         abort_unless($script->status === ContentStatus::Approved, 404);
 
-        $alreadyOwned = Purchase::where('user_id', $request->user()->id)
-            ->where('purchasable_type', Script::class)
-            ->where('purchasable_id', $script->id)
-            ->whereIn('status', [PurchaseStatus::Pending, PurchaseStatus::Completed])
-            ->exists();
+        // The exists-check-then-create below is otherwise a classic race:
+        // two near-simultaneous requests (a double-click) can both pass the
+        // check before either has written a row. Locking the user's own
+        // row for the transaction serializes their requests — the second
+        // one re-runs the check only after the first has committed.
+        DB::transaction(function () use ($request, $script) {
+            User::whereKey($request->user()->id)->lockForUpdate()->first();
 
-        abort_if($alreadyOwned, 422, 'You already own or have a pending purchase for this script.');
+            $alreadyOwned = Purchase::where('user_id', $request->user()->id)
+                ->where('purchasable_type', Script::class)
+                ->where('purchasable_id', $script->id)
+                ->whereIn('status', [PurchaseStatus::Pending, PurchaseStatus::Completed])
+                ->exists();
 
-        $purchase = Purchase::create([
-            'user_id' => $request->user()->id,
-            'purchasable_type' => Script::class,
-            'purchasable_id' => $script->id,
-            'price' => $script->price,
-            'status' => PurchaseStatus::Pending,
-        ]);
+            abort_if($alreadyOwned, 422, 'You already own or have a pending purchase for this script.');
 
-        $purchase->transactions()->create([
-            'user_id' => $request->user()->id,
-            'amount' => $script->price,
-            'gateway' => 'manual',
-            'status' => TransactionStatus::Pending,
-        ]);
+            $purchase = Purchase::create([
+                'user_id' => $request->user()->id,
+                'purchasable_type' => Script::class,
+                'purchasable_id' => $script->id,
+                'price' => $script->price,
+                'status' => PurchaseStatus::Pending,
+            ]);
+
+            $purchase->transactions()->create([
+                'user_id' => $request->user()->id,
+                'amount' => $script->price,
+                'gateway' => 'manual',
+                'status' => TransactionStatus::Pending,
+            ]);
+        });
 
         return redirect()->route('user.purchases.index')
             ->with('status', "Purchase submitted for \"{$script->title}\" — pending payment confirmation.");

@@ -10,6 +10,7 @@ use App\Models\Script;
 use App\Notifications\ContentReviewed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ScriptController extends Controller
@@ -52,14 +53,19 @@ class ScriptController extends Controller
     {
         abort_unless($script->status === ContentStatus::Pending, 422, 'Only pending scripts can be approved.');
 
-        $approval = $script->approvals()->where('status', ApprovalStatus::Pending)->latest()->firstOrFail();
-        $approval->update([
-            'status' => ApprovalStatus::Approved,
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-        ]);
+        // The approval record and the script's own status must land or
+        // fail together — a crash between the two writes would otherwise
+        // leave an "approved" approval against a script still "pending".
+        DB::transaction(function () use ($request, $script) {
+            $approval = $script->approvals()->where('status', ApprovalStatus::Pending)->latest()->firstOrFail();
+            $approval->update([
+                'status' => ApprovalStatus::Approved,
+                'reviewed_by' => $request->user()->id,
+                'reviewed_at' => now(),
+            ]);
 
-        $script->update(['status' => ContentStatus::Approved]);
+            $script->update(['status' => ContentStatus::Approved]);
+        });
 
         $script->creator->notify(new ContentReviewed('script', $script->title, $script->id, ApprovalStatus::Approved, null));
 
@@ -74,15 +80,17 @@ class ScriptController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $approval = $script->approvals()->where('status', ApprovalStatus::Pending)->latest()->firstOrFail();
-        $approval->update([
-            'status' => ApprovalStatus::Rejected,
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        DB::transaction(function () use ($request, $script, $validated) {
+            $approval = $script->approvals()->where('status', ApprovalStatus::Pending)->latest()->firstOrFail();
+            $approval->update([
+                'status' => ApprovalStatus::Rejected,
+                'reviewed_by' => $request->user()->id,
+                'reviewed_at' => now(),
+                'notes' => $validated['notes'] ?? null,
+            ]);
 
-        $script->update(['status' => ContentStatus::Rejected]);
+            $script->update(['status' => ContentStatus::Rejected]);
+        });
 
         $script->creator->notify(new ContentReviewed('script', $script->title, $script->id, ApprovalStatus::Rejected, $validated['notes'] ?? null));
 
