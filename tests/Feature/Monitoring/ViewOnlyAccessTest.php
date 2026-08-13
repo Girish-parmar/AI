@@ -76,17 +76,28 @@ class ViewOnlyAccessTest extends TestCase
         $this->assertSame(PayoutStatus::Pending, $payout->fresh()->status);
     }
 
-    public function test_admin_can_view_transactions_but_cannot_succeed_or_fail_them(): void
+    public function test_admin_has_full_access_to_transactions_via_its_own_route(): void
     {
+        // Purchases/Orders is "Full" for Admin per the plan (unlike Finance
+        // & Payouts, which stays View only) — Admin gets the same reconcile
+        // actions Accounts has, but only via admin.*, not accounts.*.
         $admin = User::factory()->create(['role' => Role::Admin]);
         $transaction = $this->purchaseTransaction();
 
         $this->actingAs($admin)->get(route('admin.transactions.index'))->assertStatus(200);
-
         $this->actingAs($admin)->post(route('accounts.transactions.succeed', $transaction))->assertForbidden();
-        $this->actingAs($admin)->post(route('accounts.transactions.fail', $transaction))->assertForbidden();
 
-        $this->assertSame(TransactionStatus::Pending, $transaction->fresh()->status);
+        $this->actingAs($admin)->post(route('admin.transactions.succeed', $transaction));
+        $this->assertSame(TransactionStatus::Succeeded, $transaction->fresh()->status);
+    }
+
+    public function test_monitoring_cannot_use_admins_transaction_reconcile_routes(): void
+    {
+        $monitoring = User::factory()->create(['role' => Role::Monitoring]);
+        $transaction = $this->purchaseTransaction();
+
+        $this->actingAs($monitoring)->post(route('admin.transactions.succeed', $transaction))->assertForbidden();
+        $this->actingAs($monitoring)->post(route('admin.transactions.fail', $transaction))->assertForbidden();
     }
 
     public function test_admin_can_view_payouts_but_cannot_record_or_settle_them(): void
@@ -123,6 +134,39 @@ class ViewOnlyAccessTest extends TestCase
         $this->actingAs($admin)->get(route('admin.legal-documents.index'))->assertStatus(200);
     }
 
+    public function test_monitoring_can_view_demo_access_but_has_no_write_routes(): void
+    {
+        $monitoring = User::factory()->create(['role' => Role::Monitoring]);
+
+        $this->actingAs($monitoring)->get(route('monitoring.demo-access.index'))->assertStatus(200);
+        $this->actingAs($monitoring)->get(route('admin.demo-access.create'))->assertForbidden();
+        $this->actingAs($monitoring)->post(route('admin.demo-access.store'), [])->assertForbidden();
+    }
+
+    public function test_accounts_can_view_courses_and_scripts_but_has_no_write_routes(): void
+    {
+        $accounts = User::factory()->create(['role' => Role::Accounts]);
+        Course::factory()->approved()->create();
+
+        $this->actingAs($accounts)->get(route('accounts.courses.index'))->assertStatus(200);
+        $this->actingAs($accounts)->get(route('accounts.scripts.index'))->assertStatus(200);
+        $this->actingAs($accounts)->get(route('admin.courses.index'))->assertForbidden();
+    }
+
+    public function test_monitoring_and_accounts_can_view_subscription_plans_but_not_manage_them(): void
+    {
+        $plan = \App\Models\SubscriptionPlan::factory()->create();
+
+        foreach ([Role::Monitoring, Role::Accounts] as $role) {
+            $actor = User::factory()->create(['role' => $role]);
+
+            $this->actingAs($actor)->get(route("{$role->value}.subscription-plans.index"))->assertStatus(200);
+            $this->actingAs($actor)->get(route('admin.subscription-plans.index'))->assertForbidden();
+            $this->actingAs($actor)->get(route('admin.subscription-plans.create'))->assertForbidden();
+            $this->actingAs($actor)->put(route('admin.subscription-plans.update', $plan), ['name' => 'x'])->assertForbidden();
+        }
+    }
+
     public function test_creator_and_user_cannot_reach_any_of_the_new_view_only_routes(): void
     {
         $creator = User::factory()->create(['role' => Role::Creator]);
@@ -132,8 +176,12 @@ class ViewOnlyAccessTest extends TestCase
             $this->actingAs($actor)->get(route('monitoring.users.index'))->assertForbidden();
             $this->actingAs($actor)->get(route('monitoring.transactions.index'))->assertForbidden();
             $this->actingAs($actor)->get(route('monitoring.payouts.index'))->assertForbidden();
+            $this->actingAs($actor)->get(route('monitoring.demo-access.index'))->assertForbidden();
+            $this->actingAs($actor)->get(route('monitoring.subscription-plans.index'))->assertForbidden();
             $this->actingAs($actor)->get(route('admin.transactions.index'))->assertForbidden();
             $this->actingAs($actor)->get(route('admin.payouts.index'))->assertForbidden();
+            $this->actingAs($actor)->get(route('admin.subscription-plans.index'))->assertForbidden();
+            $this->actingAs($actor)->get(route('accounts.courses.index'))->assertForbidden();
         }
     }
 
@@ -146,5 +194,6 @@ class ViewOnlyAccessTest extends TestCase
         $this->actingAs($superadmin)->get(route('admin.users.index'))->assertStatus(200);
         $this->actingAs($superadmin)->get(route('monitoring.audit-logs.index'))->assertStatus(200);
         $this->actingAs($superadmin)->get(route('monitoring.legal-documents.index'))->assertStatus(200);
+        $this->actingAs($superadmin)->get(route('admin.subscription-plans.index'))->assertStatus(200);
     }
 }

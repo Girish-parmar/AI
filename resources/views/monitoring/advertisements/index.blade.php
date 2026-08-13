@@ -3,7 +3,7 @@
 @section('title', 'Advertisements')
 
 @section('content')
-    <h1 class="h3 fw-bold mb-4">Advertising <span class="badge text-bg-light text-body-secondary">View only</span></h1>
+    <h1 class="h3 fw-bold mb-4">Advertising</h1>
 
     <form method="GET" class="mb-4 d-flex align-items-center gap-2">
         <label for="status" class="form-label mb-0 small text-body-secondary">Filter by status</label>
@@ -27,6 +27,7 @@
                         <th>Target URL</th>
                         <th>Window</th>
                         <th>Status</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,7 +42,48 @@
                                 {{ $advertisement->ends_at?->toFormattedDateString() ?? 'Indefinite' }}
                             </td>
                             <td><span class="badge {{ $advertisement->status->badgeClass() }}">{{ $advertisement->status->label() }}</span></td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-2">
+                                    @if ($advertisement->status->value === 'pending')
+                                        <form method="POST" action="{{ route('monitoring.advertisements.approve', $advertisement) }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                        </form>
+                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#reject-ad-{{ $advertisement->id }}">Reject</button>
+                                    @endif
+
+                                    <a href="{{ route('monitoring.advertisements.edit', $advertisement) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+
+                                    <form method="POST" action="{{ route('monitoring.advertisements.destroy', $advertisement) }}" onsubmit="return confirm('Delete this advertisement?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
+
+                        @if ($advertisement->status->value === 'pending')
+                            <div class="modal fade" id="reject-ad-{{ $advertisement->id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <form method="POST" action="{{ route('monitoring.advertisements.reject', $advertisement) }}" class="modal-content">
+                                        @csrf
+                                        <div class="modal-header">
+                                            <h2 class="h6 modal-title">Reject &ldquo;{{ $advertisement->title }}&rdquo;</h2>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <label for="notes-{{ $advertisement->id }}" class="form-label">Reason (optional, shared with the creator)</label>
+                                            <textarea id="notes-{{ $advertisement->id }}" name="notes" rows="3" class="form-control"></textarea>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-danger">Reject</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        @endif
                     @endforeach
                 </tbody>
             </table>
