@@ -82,6 +82,25 @@
         </div>
     </div>
 
+    <div class="mb-3" style="max-width: 12rem;">
+        <label for="trial_days" class="form-label">Free trial <span class="text-body-secondary">(days)</span></label>
+        <input
+            id="trial_days"
+            type="number"
+            step="1"
+            min="0"
+            max="365"
+            name="trial_days"
+            class="form-control @error('trial_days') is-invalid @enderror"
+            value="{{ old('trial_days', $plan->trial_days ?? 0) }}"
+            required
+        >
+        <div class="form-text">0 for no trial. Subscribers get full access for this many days before any charge is created.</div>
+        @error('trial_days')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
     <div class="form-check mb-4">
         <input
             id="is_active"

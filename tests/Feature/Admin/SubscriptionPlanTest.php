@@ -24,6 +24,7 @@ class SubscriptionPlanTest extends TestCase
             'description' => 'For power users.',
             'price' => 29.99,
             'billing_interval' => 'monthly',
+            'trial_days' => 14,
             'is_active' => '1',
         ]);
 
@@ -45,6 +46,7 @@ class SubscriptionPlanTest extends TestCase
             'slug' => $plan->slug,
             'price' => $plan->price,
             'billing_interval' => $plan->billing_interval->value,
+            'trial_days' => $plan->trial_days,
             // is_active omitted, like an unchecked checkbox
         ]);
 
