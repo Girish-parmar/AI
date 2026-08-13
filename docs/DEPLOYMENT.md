@@ -9,6 +9,9 @@ have these, and this app won't deploy cleanly without them.
 
 - [ ] A Hostinger **Business** (or Cloud/VPS) hosting plan, with a domain pointed at it
 - [ ] SSH access enabled (hPanel → Advanced → SSH Access)
+- [ ] **PHP 8.4** selected for the domain (hPanel → Advanced → PHP Configuration) — the
+      app's locked dependencies (Laravel 13.x / Symfony 8.1.x) require it; PHP 8.3 will
+      fail during `composer install` with an unsatisfiable-platform-requirement error
 - [ ] This repo pushed to GitHub with the code you want live
 - [ ] 15–20 minutes
 
