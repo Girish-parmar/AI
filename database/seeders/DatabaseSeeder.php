@@ -4,11 +4,16 @@ namespace Database\Seeders;
 
 use App\Enums\ApprovalStatus;
 use App\Enums\ContentStatus;
+use App\Enums\PayoutStatus;
 use App\Enums\PurchaseStatus;
 use App\Enums\Role;
 use App\Enums\SubscriptionStatus;
 use App\Enums\TransactionStatus;
+use App\Models\Advertisement;
 use App\Models\Course;
+use App\Models\DemoAccess;
+use App\Models\LegalDocument;
+use App\Models\Payout;
 use App\Models\Purchase;
 use App\Models\Script;
 use App\Models\Subscription;
@@ -76,9 +81,9 @@ class DatabaseSeeder extends Seeder
             $creator
         );
 
-        Script::factory()->approved()->create(['creator_id' => $creator->id, 'title' => 'Log Parser']);
+        $approvedScript = Script::factory()->approved()->create(['creator_id' => $creator->id, 'title' => 'Log Parser']);
 
-        SubscriptionPlan::factory()->create(['name' => 'Basic Plan', 'slug' => 'basic', 'price' => 9.99]);
+        $basicPlan = SubscriptionPlan::factory()->create(['name' => 'Basic Plan', 'slug' => 'basic', 'price' => 9.99]);
         $proPlan = SubscriptionPlan::factory()->create(['name' => 'Pro Plan', 'slug' => 'pro', 'price' => 29.99]);
         SubscriptionPlan::factory()->inactive()->create(['name' => 'Legacy Plan', 'slug' => 'legacy', 'price' => 4.99]);
 
@@ -102,6 +107,92 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->paid($subscriber, $purchase, $purchase->price);
+
+        // A second, still-pending purchase for the same subscriber, and a
+        // separate user with a pending subscription, so the Accounts
+        // reconciliation queue has something to review out of the box.
+        $pendingPurchase = Purchase::create([
+            'user_id' => $subscriber->id,
+            'purchasable_type' => Script::class,
+            'purchasable_id' => $approvedScript->id,
+            'price' => $approvedScript->price,
+            'status' => PurchaseStatus::Pending,
+        ]);
+        $pendingPurchase->transactions()->create([
+            'user_id' => $subscriber->id,
+            'amount' => $pendingPurchase->price,
+            'gateway' => 'manual',
+            'status' => TransactionStatus::Pending,
+        ]);
+
+        $pendingSubscriber = User::factory()->create([
+            'name' => 'Pending Subscriber',
+            'email' => 'pending-subscriber@example.com',
+            'role' => Role::User,
+        ]);
+        $pendingSubscription = Subscription::create([
+            'user_id' => $pendingSubscriber->id,
+            'subscription_plan_id' => $basicPlan->id,
+            'status' => SubscriptionStatus::Pending,
+            'starts_at' => now(),
+        ]);
+        $pendingSubscription->transactions()->create([
+            'user_id' => $pendingSubscriber->id,
+            'amount' => $basicPlan->price,
+            'gateway' => 'manual',
+            'status' => TransactionStatus::Pending,
+        ]);
+
+        // A partial payout already paid, leaving an outstanding balance so
+        // the Accounts payouts page has something to reconcile.
+        Payout::create([
+            'creator_id' => $creator->id,
+            'amount' => round($approvedCourse->price / 2, 2),
+            'status' => PayoutStatus::Paid,
+            'reference' => 'seed-payout-1',
+            'paid_at' => now()->subDays(3),
+        ]);
+
+        Advertisement::factory()->create([
+            'created_by' => $creator->id,
+            'title' => 'Learn Guitar in 30 Days',
+        ]);
+
+        $this->submitted(
+            Advertisement::factory()->pending()->create(['created_by' => $creator->id, 'title' => '50% Off Laravel Course']),
+            $creator
+        );
+
+        Advertisement::factory()->approved()->create([
+            'created_by' => $creator->id,
+            'title' => 'New: Automation Scripts',
+        ]);
+
+        LegalDocument::create([
+            'type' => 'terms_of_service',
+            'title' => 'Terms of Service',
+            'content' => "These are the platform's terms of service.",
+            'version' => '1.0',
+            'created_by' => $users['monitoring']->id,
+            'published_at' => now()->subMonth(),
+        ]);
+
+        LegalDocument::create([
+            'type' => 'privacy_policy',
+            'title' => 'Privacy Policy',
+            'content' => 'Draft privacy policy, not yet published.',
+            'version' => '0.1',
+            'created_by' => $users['monitoring']->id,
+            'published_at' => null,
+        ]);
+
+        DemoAccess::create([
+            'user_id' => $subscriber->id,
+            'resource_type' => Course::class,
+            'resource_id' => $approvedCourse->id,
+            'granted_by' => $users['admin']->id,
+            'expires_at' => now()->addDays(7),
+        ]);
     }
 
     private function paid(User $user, Subscription|Purchase $payable, string $amount): void
@@ -115,7 +206,7 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 
-    private function submitted(Course|Script $content, User $creator): void
+    private function submitted(Course|Script|Advertisement $content, User $creator): void
     {
         $content->approvals()->create([
             'requested_by' => $creator->id,
@@ -123,7 +214,7 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 
-    private function reviewed(Course|Script $content, User $creator, User $reviewer, ApprovalStatus $status, ?string $notes): void
+    private function reviewed(Course|Script|Advertisement $content, User $creator, User $reviewer, ApprovalStatus $status, ?string $notes): void
     {
         $content->approvals()->create([
             'requested_by' => $creator->id,
