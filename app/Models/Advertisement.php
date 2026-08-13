@@ -38,4 +38,20 @@ class Advertisement extends Model
     {
         return $query->where('status', ContentStatus::Approved);
     }
+
+    public function scopeOwnedBy(Builder $query, int $userId): Builder
+    {
+        return $query->where('created_by', $userId);
+    }
+
+    /**
+     * Approved ads currently within their display window (or with no
+     * window set at all, meaning "show as soon as approved").
+     */
+    public function scopeLive(Builder $query): Builder
+    {
+        return $query->approved()
+            ->where(fn (Builder $q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+            ->where(fn (Builder $q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', now()));
+    }
 }
