@@ -58,6 +58,7 @@
                                     <input class="form-check-input" type="checkbox" name="remember" id="remember">
                                     <label class="form-check-label" for="remember">Remember me</label>
                                 </div>
+                                <a href="{{ route('password.request') }}" class="small">Forgot your password?</a>
                             </div>
 
                             <button type="submit" class="btn btn-primary w-100 mb-3">Log in</button>
