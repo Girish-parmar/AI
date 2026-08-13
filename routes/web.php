@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Accounts\DashboardController as AccountsDashboardController;
+use App\Http\Controllers\Accounts\PayoutController as AccountsPayoutController;
 use App\Http\Controllers\Accounts\TransactionController as AccountsTransactionController;
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -149,4 +150,9 @@ Route::middleware(['auth', 'role:accounts,superadmin', 'audit'])
         Route::get('transactions', [AccountsTransactionController::class, 'index'])->name('transactions.index');
         Route::post('transactions/{transaction}/succeed', [AccountsTransactionController::class, 'succeed'])->name('transactions.succeed');
         Route::post('transactions/{transaction}/fail', [AccountsTransactionController::class, 'fail'])->name('transactions.fail');
+
+        Route::get('payouts', [AccountsPayoutController::class, 'index'])->name('payouts.index');
+        Route::post('payouts', [AccountsPayoutController::class, 'store'])->name('payouts.store');
+        Route::post('payouts/{payout}/pay', [AccountsPayoutController::class, 'pay'])->name('payouts.pay');
+        Route::post('payouts/{payout}/fail', [AccountsPayoutController::class, 'fail'])->name('payouts.fail');
     });

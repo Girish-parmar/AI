@@ -4,11 +4,13 @@ namespace Database\Seeders;
 
 use App\Enums\ApprovalStatus;
 use App\Enums\ContentStatus;
+use App\Enums\PayoutStatus;
 use App\Enums\PurchaseStatus;
 use App\Enums\Role;
 use App\Enums\SubscriptionStatus;
 use App\Enums\TransactionStatus;
 use App\Models\Course;
+use App\Models\Payout;
 use App\Models\Purchase;
 use App\Models\Script;
 use App\Models\Subscription;
@@ -136,6 +138,16 @@ class DatabaseSeeder extends Seeder
             'amount' => $basicPlan->price,
             'gateway' => 'manual',
             'status' => TransactionStatus::Pending,
+        ]);
+
+        // A partial payout already paid, leaving an outstanding balance so
+        // the Accounts payouts page has something to reconcile.
+        Payout::create([
+            'creator_id' => $creator->id,
+            'amount' => round($approvedCourse->price / 2, 2),
+            'status' => PayoutStatus::Paid,
+            'reference' => 'seed-payout-1',
+            'paid_at' => now()->subDays(3),
         ]);
     }
 

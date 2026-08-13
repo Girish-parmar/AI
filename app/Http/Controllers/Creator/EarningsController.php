@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Creator;
 
+use App\Enums\PayoutStatus;
 use App\Enums\PurchaseStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\Payout;
 use App\Models\Purchase;
 use App\Models\Script;
 use Illuminate\Http\Request;
@@ -25,9 +27,15 @@ class EarningsController extends Controller
 
         $totalEarned = $purchases->where('status', PurchaseStatus::Completed)->sum('price');
 
+        $payouts = Payout::where('creator_id', $creatorId)->latest()->get();
+        $totalPaidOut = $payouts->where('status', PayoutStatus::Paid)->sum('amount');
+
         return view('creator.earnings.index', [
             'purchases' => $purchases,
             'totalEarned' => $totalEarned,
+            'payouts' => $payouts,
+            'totalPaidOut' => $totalPaidOut,
+            'outstanding' => $totalEarned - $totalPaidOut,
         ]);
     }
 }

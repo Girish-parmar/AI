@@ -53,7 +53,7 @@ enum Role: string
                 ['label' => 'Audit Logs', 'available' => true, 'route' => 'monitoring.audit-logs.index'],
                 ['label' => 'Legal & Compliance', 'available' => false],
                 ['label' => 'Advertising', 'available' => false],
-                ['label' => 'Finance & Payouts', 'available' => false],
+                ['label' => 'Finance & Payouts', 'available' => true, 'route' => 'accounts.payouts.index'],
             ],
             self::Admin => [
                 ['label' => 'Dashboard', 'available' => true, 'route' => 'admin.dashboard'],
@@ -90,7 +90,7 @@ enum Role: string
             self::Accounts => [
                 ['label' => 'Dashboard', 'available' => true, 'route' => 'accounts.dashboard'],
                 ['label' => 'Invoices', 'available' => false],
-                ['label' => 'Payouts', 'available' => false],
+                ['label' => 'Payouts', 'available' => true, 'route' => 'accounts.payouts.index'],
                 ['label' => 'Revenue Reports', 'available' => false],
                 ['label' => 'Purchases & Orders', 'available' => true, 'route' => 'accounts.transactions.index'],
             ],
