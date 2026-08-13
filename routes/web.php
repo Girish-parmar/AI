@@ -6,6 +6,7 @@ use App\Http\Controllers\Accounts\TransactionController as AccountsTransactionCo
 use App\Http\Controllers\Admin\AdvertisementController as AdminAdvertisementController;
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DemoAccessController as AdminDemoAccessController;
 use App\Http\Controllers\Admin\ScriptController as AdminScriptController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\User\CourseController as UserCourseController;
 use App\Http\Controllers\User\DashboardController as UserDashboardController;
+use App\Http\Controllers\User\DemoAccessController as UserDemoAccessController;
 use App\Http\Controllers\User\PurchaseController as UserPurchaseController;
 use App\Http\Controllers\User\ScriptController as UserScriptController;
 use App\Http\Controllers\User\SubscriptionController as UserSubscriptionController;
@@ -97,6 +99,9 @@ Route::middleware(['auth', 'role:admin,superadmin', 'audit'])
         Route::resource('advertisements', AdminAdvertisementController::class)->only(['index', 'edit', 'update', 'destroy']);
         Route::post('advertisements/{advertisement}/approve', [AdminAdvertisementController::class, 'approve'])->name('advertisements.approve');
         Route::post('advertisements/{advertisement}/reject', [AdminAdvertisementController::class, 'reject'])->name('advertisements.reject');
+
+        Route::resource('demo-access', AdminDemoAccessController::class)->only(['index', 'create', 'store']);
+        Route::post('demo-access/{demoAccess}/revoke', [AdminDemoAccessController::class, 'revoke'])->name('demo-access.revoke');
     });
 
 Route::middleware(['auth', 'role:monitoring', 'audit'])
@@ -157,6 +162,8 @@ Route::middleware(['auth', 'role:user'])
 
         Route::get('subscription', [UserSubscriptionController::class, 'show'])->name('subscription.show');
         Route::post('subscription/cancel', [UserSubscriptionController::class, 'cancel'])->name('subscription.cancel');
+
+        Route::get('demo-access', [UserDemoAccessController::class, 'index'])->name('demo-access.index');
     });
 
 // Purchase/subscription reconciliation, shared by Accounts and SuperAdmin.

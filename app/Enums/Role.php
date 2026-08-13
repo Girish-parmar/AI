@@ -53,6 +53,7 @@ enum Role: string
                 ['label' => 'Audit Logs', 'available' => true, 'route' => 'monitoring.audit-logs.index'],
                 ['label' => 'Legal & Compliance', 'available' => false],
                 ['label' => 'Advertising', 'available' => true, 'route' => 'admin.advertisements.index'],
+                ['label' => 'Demo Access', 'available' => true, 'route' => 'admin.demo-access.index'],
                 ['label' => 'Finance & Payouts', 'available' => true, 'route' => 'accounts.payouts.index'],
             ],
             self::Admin => [
@@ -60,6 +61,7 @@ enum Role: string
                 ['label' => 'Courses & Scripts', 'available' => true, 'route' => 'admin.courses.index'],
                 ['label' => 'Approvals', 'available' => false],
                 ['label' => 'Advertising', 'available' => true, 'route' => 'admin.advertisements.index'],
+                ['label' => 'Demo Access', 'available' => true, 'route' => 'admin.demo-access.index'],
                 ['label' => 'Subscriptions', 'available' => false],
                 ['label' => 'Purchases & Orders', 'available' => false],
                 ['label' => 'User Management', 'available' => true, 'route' => 'admin.users.index'],
@@ -87,7 +89,7 @@ enum Role: string
                 ['label' => 'Browse Scripts', 'available' => true, 'route' => 'user.scripts.index'],
                 ['label' => 'My Subscriptions', 'available' => true, 'route' => 'user.subscription.show'],
                 ['label' => 'My Purchases', 'available' => true, 'route' => 'user.purchases.index'],
-                ['label' => 'Demo Content', 'available' => false],
+                ['label' => 'Demo Content', 'available' => true, 'route' => 'user.demo-access.index'],
             ],
             self::Accounts => [
                 ['label' => 'Dashboard', 'available' => true, 'route' => 'accounts.dashboard'],

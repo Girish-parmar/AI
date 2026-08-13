@@ -7,6 +7,7 @@ use App\Enums\PurchaseStatus;
 use App\Enums\TransactionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\DemoAccess;
 use App\Models\Purchase;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,7 +32,17 @@ class CourseController extends Controller
             ->latest()
             ->first();
 
-        return view('user.courses.show', ['course' => $course->load('creator'), 'purchase' => $purchase]);
+        $demoAccess = DemoAccess::where('user_id', $request->user()->id)
+            ->where('resource_type', Course::class)
+            ->where('resource_id', $course->id)
+            ->active()
+            ->first();
+
+        return view('user.courses.show', [
+            'course' => $course->load('creator'),
+            'purchase' => $purchase,
+            'demoAccess' => $demoAccess,
+        ]);
     }
 
     public function purchase(Request $request, Course $course): RedirectResponse
