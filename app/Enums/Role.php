@@ -50,7 +50,7 @@ enum Role: string
                 ['label' => 'Subscriptions', 'available' => false],
                 ['label' => 'Purchases & Orders', 'available' => false],
                 ['label' => 'User Management', 'available' => false],
-                ['label' => 'Audit Logs', 'available' => false],
+                ['label' => 'Audit Logs', 'available' => true, 'route' => 'monitoring.audit-logs.index'],
                 ['label' => 'Legal & Compliance', 'available' => false],
                 ['label' => 'Advertising', 'available' => false],
                 ['label' => 'Finance & Payouts', 'available' => false],
@@ -65,7 +65,7 @@ enum Role: string
             ],
             self::Monitoring => [
                 ['label' => 'Dashboard', 'available' => true, 'route' => 'monitoring.dashboard'],
-                ['label' => 'Audit Logs', 'available' => false],
+                ['label' => 'Audit Logs', 'available' => true, 'route' => 'monitoring.audit-logs.index'],
                 ['label' => 'Legal & Compliance', 'available' => false],
                 ['label' => 'Advertising', 'available' => false],
                 ['label' => 'Courses & Scripts', 'available' => true, 'route' => 'monitoring.courses.index', 'note' => 'View only'],

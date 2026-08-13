@@ -33,6 +33,11 @@ class Script extends Model
         return $this->morphMany(Approval::class, 'approvable');
     }
 
+    public function purchases(): MorphMany
+    {
+        return $this->morphMany(Purchase::class, 'purchasable');
+    }
+
     public function scopeApproved(Builder $query): Builder
     {
         return $query->where('status', ContentStatus::Approved);

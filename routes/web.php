@@ -11,6 +11,7 @@ use App\Http\Controllers\Creator\DashboardController as CreatorDashboardControll
 use App\Http\Controllers\Creator\ScriptController as CreatorScriptController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Monitoring\AuditLogController as MonitoringAuditLogController;
 use App\Http\Controllers\Monitoring\CourseController as MonitoringCourseController;
 use App\Http\Controllers\Monitoring\DashboardController as MonitoringDashboardController;
 use App\Http\Controllers\Monitoring\ScriptController as MonitoringScriptController;
@@ -48,7 +49,7 @@ Route::middleware(['auth', 'role:superadmin'])
 
 // Full course/script management, shared by Admin and SuperAdmin (SuperAdmin's
 // sidebar links into these same /admin/* pages rather than duplicating them).
-Route::middleware(['auth', 'role:admin,superadmin'])
+Route::middleware(['auth', 'role:admin,superadmin', 'audit'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -63,7 +64,7 @@ Route::middleware(['auth', 'role:admin,superadmin'])
         Route::post('scripts/{script}/reject', [AdminScriptController::class, 'reject'])->name('scripts.reject');
     });
 
-Route::middleware(['auth', 'role:monitoring'])
+Route::middleware(['auth', 'role:monitoring', 'audit'])
     ->prefix('monitoring')
     ->name('monitoring.')
     ->group(function () {
@@ -71,6 +72,14 @@ Route::middleware(['auth', 'role:monitoring'])
 
         Route::get('courses', [MonitoringCourseController::class, 'index'])->name('courses.index');
         Route::get('scripts', [MonitoringScriptController::class, 'index'])->name('scripts.index');
+    });
+
+// Audit log viewer, shared by Monitoring and SuperAdmin.
+Route::middleware(['auth', 'role:monitoring,superadmin', 'audit'])
+    ->prefix('monitoring')
+    ->name('monitoring.')
+    ->group(function () {
+        Route::get('audit-logs', [MonitoringAuditLogController::class, 'index'])->name('audit-logs.index');
     });
 
 Route::middleware(['auth', 'role:creator'])
@@ -99,7 +108,7 @@ Route::middleware(['auth', 'role:user'])
         Route::get('scripts/{script}', [UserScriptController::class, 'show'])->name('scripts.show');
     });
 
-Route::middleware(['auth', 'role:accounts'])
+Route::middleware(['auth', 'role:accounts', 'audit'])
     ->prefix('accounts')
     ->name('accounts.')
     ->group(function () {
