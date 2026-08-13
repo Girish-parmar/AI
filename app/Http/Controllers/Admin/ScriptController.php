@@ -7,6 +7,7 @@ use App\Enums\ContentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Content\UpdateContentRequest;
 use App\Models\Script;
+use App\Notifications\ContentReviewed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -60,6 +61,8 @@ class ScriptController extends Controller
 
         $script->update(['status' => ContentStatus::Approved]);
 
+        $script->creator->notify(new ContentReviewed('script', $script->title, $script->id, ApprovalStatus::Approved, null));
+
         return back()->with('status', "\"{$script->title}\" approved.");
     }
 
@@ -80,6 +83,8 @@ class ScriptController extends Controller
         ]);
 
         $script->update(['status' => ContentStatus::Rejected]);
+
+        $script->creator->notify(new ContentReviewed('script', $script->title, $script->id, ApprovalStatus::Rejected, $validated['notes'] ?? null));
 
         return back()->with('status', "\"{$script->title}\" rejected.");
     }

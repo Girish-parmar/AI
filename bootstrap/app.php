@@ -16,6 +16,17 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
             'audit' => \App\Http\Middleware\RecordAuditLog::class,
         ]);
+
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
+        // Opt-in: if Hostinger (or any host) puts a reverse proxy/load
+        // balancer in front of the app, set TRUSTED_PROXIES in .env
+        // (comma-separated IPs, or "*" to trust the immediate proxy
+        // regardless of IP) so HTTPS detection and generated URLs are
+        // correct. Left untrusted by default — safe for direct hosting.
+        if ($trustedProxies = env('TRUSTED_PROXIES')) {
+            $middleware->trustProxies(at: $trustedProxies === '*' ? '*' : explode(',', $trustedProxies));
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

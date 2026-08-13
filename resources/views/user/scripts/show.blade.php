@@ -12,6 +12,12 @@
             <p class="text-body-secondary mb-3">by {{ $script->creator->name }}</p>
             <p class="fs-4 fw-bold mb-3">${{ number_format($script->price, 2) }}</p>
 
+            @if ($demoAccess)
+                <div class="alert alert-info">
+                    You have demo access to this script until <strong>{{ $demoAccess->expires_at->format('M j, Y g:ia') }}</strong>.
+                </div>
+            @endif
+
             @if ($purchase)
                 <div class="alert {{ $purchase->status->value === 'completed' ? 'alert-success' : 'alert-warning' }}">
                     Purchase status: <strong>{{ $purchase->status->label() }}</strong>

@@ -6,6 +6,7 @@ use App\Enums\ContentStatus;
 use App\Enums\PurchaseStatus;
 use App\Enums\TransactionStatus;
 use App\Http\Controllers\Controller;
+use App\Models\DemoAccess;
 use App\Models\Purchase;
 use App\Models\Script;
 use Illuminate\Http\RedirectResponse;
@@ -31,7 +32,17 @@ class ScriptController extends Controller
             ->latest()
             ->first();
 
-        return view('user.scripts.show', ['script' => $script->load('creator'), 'purchase' => $purchase]);
+        $demoAccess = DemoAccess::where('user_id', $request->user()->id)
+            ->where('resource_type', Script::class)
+            ->where('resource_id', $script->id)
+            ->active()
+            ->first();
+
+        return view('user.scripts.show', [
+            'script' => $script->load('creator'),
+            'purchase' => $purchase,
+            'demoAccess' => $demoAccess,
+        ]);
     }
 
     public function purchase(Request $request, Script $script): RedirectResponse

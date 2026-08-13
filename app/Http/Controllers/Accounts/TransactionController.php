@@ -9,6 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Purchase;
 use App\Models\Subscription;
 use App\Models\Transaction;
+use App\Notifications\PurchaseStatusUpdated;
+use App\Notifications\SubscriptionStatusUpdated;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -42,8 +44,10 @@ class TransactionController extends Controller
 
         if ($payable instanceof Purchase) {
             $payable->update(['status' => PurchaseStatus::Completed]);
+            $transaction->user->notify(new PurchaseStatusUpdated($payable->purchasable->title, PurchaseStatus::Completed));
         } elseif ($payable instanceof Subscription) {
             $payable->update(['status' => SubscriptionStatus::Active]);
+            $transaction->user->notify(new SubscriptionStatusUpdated($payable->plan->name, SubscriptionStatus::Active));
         }
 
         return back()->with('status', 'Transaction marked as succeeded.');
@@ -59,8 +63,10 @@ class TransactionController extends Controller
 
         if ($payable instanceof Purchase) {
             $payable->update(['status' => PurchaseStatus::Failed]);
+            $transaction->user->notify(new PurchaseStatusUpdated($payable->purchasable->title, PurchaseStatus::Failed));
         } elseif ($payable instanceof Subscription) {
             $payable->update(['status' => SubscriptionStatus::Cancelled, 'cancelled_at' => now()]);
+            $transaction->user->notify(new SubscriptionStatusUpdated($payable->plan->name, SubscriptionStatus::Cancelled));
         }
 
         return back()->with('status', 'Transaction marked as failed.');

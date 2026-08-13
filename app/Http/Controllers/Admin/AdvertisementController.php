@@ -7,6 +7,7 @@ use App\Enums\ContentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Advertisement\UpdateAdvertisementRequest;
 use App\Models\Advertisement;
+use App\Notifications\ContentReviewed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -60,6 +61,8 @@ class AdvertisementController extends Controller
 
         $advertisement->update(['status' => ContentStatus::Approved]);
 
+        $advertisement->creator->notify(new ContentReviewed('advertisement', $advertisement->title, $advertisement->id, ApprovalStatus::Approved, null));
+
         return back()->with('status', "\"{$advertisement->title}\" approved.");
     }
 
@@ -80,6 +83,8 @@ class AdvertisementController extends Controller
         ]);
 
         $advertisement->update(['status' => ContentStatus::Rejected]);
+
+        $advertisement->creator->notify(new ContentReviewed('advertisement', $advertisement->title, $advertisement->id, ApprovalStatus::Rejected, $validated['notes'] ?? null));
 
         return back()->with('status', "\"{$advertisement->title}\" rejected.");
     }
