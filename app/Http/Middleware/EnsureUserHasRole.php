@@ -16,10 +16,11 @@ class EnsureUserHasRole
     {
         $user = $request->user();
 
-        abort_unless(
-            $user && in_array($user->role, array_map(fn (string $role) => Role::from($role), $roles), true),
-            403
-        );
+        // tryFrom, not from: a typo'd role string in a route definition
+        // should deny access (null never matches $user->role), not 500.
+        $allowed = array_filter(array_map(fn (string $role) => Role::tryFrom($role), $roles));
+
+        abort_unless($user && in_array($user->role, $allowed, true), 403);
 
         return $next($request);
     }

@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Notifications\ContentSubmittedForReview;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 
@@ -71,12 +72,18 @@ class ScriptController extends Controller
 
         abort_unless($script->status->canSubmit(), 422, 'This script cannot be submitted from its current status.');
 
-        $script->update(['status' => ContentStatus::Pending]);
+        // A script marked "pending" must always have a matching pending
+        // approval record — the admin queue is built by querying that
+        // record, so a partial write here would silently hide the script
+        // from reviewers.
+        DB::transaction(function () use ($request, $script) {
+            $script->update(['status' => ContentStatus::Pending]);
 
-        $script->approvals()->create([
-            'requested_by' => $request->user()->id,
-            'status' => ApprovalStatus::Pending,
-        ]);
+            $script->approvals()->create([
+                'requested_by' => $request->user()->id,
+                'status' => ApprovalStatus::Pending,
+            ]);
+        });
 
         $reviewers = User::whereIn('role', [Role::Admin, Role::SuperAdmin])->get();
         Notification::send($reviewers, new ContentSubmittedForReview('script', $script->title, $request->user()->name));

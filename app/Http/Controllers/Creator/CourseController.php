@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Notifications\ContentSubmittedForReview;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 
@@ -71,12 +72,18 @@ class CourseController extends Controller
 
         abort_unless($course->status->canSubmit(), 422, 'This course cannot be submitted from its current status.');
 
-        $course->update(['status' => ContentStatus::Pending]);
+        // A course marked "pending" must always have a matching pending
+        // approval record — the admin queue is built by querying that
+        // record, so a partial write here would silently hide the course
+        // from reviewers.
+        DB::transaction(function () use ($request, $course) {
+            $course->update(['status' => ContentStatus::Pending]);
 
-        $course->approvals()->create([
-            'requested_by' => $request->user()->id,
-            'status' => ApprovalStatus::Pending,
-        ]);
+            $course->approvals()->create([
+                'requested_by' => $request->user()->id,
+                'status' => ApprovalStatus::Pending,
+            ]);
+        });
 
         $reviewers = User::whereIn('role', [Role::Admin, Role::SuperAdmin])->get();
         Notification::send($reviewers, new ContentSubmittedForReview('course', $course->title, $request->user()->name));

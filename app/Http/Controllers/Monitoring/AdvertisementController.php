@@ -10,6 +10,7 @@ use App\Models\Advertisement;
 use App\Notifications\ContentReviewed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class AdvertisementController extends Controller
@@ -52,14 +53,19 @@ class AdvertisementController extends Controller
     {
         abort_unless($advertisement->status === ContentStatus::Pending, 422, 'Only pending advertisements can be approved.');
 
-        $approval = $advertisement->approvals()->where('status', ApprovalStatus::Pending)->latest()->firstOrFail();
-        $approval->update([
-            'status' => ApprovalStatus::Approved,
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-        ]);
+        // The approval record and the ad's own status must land or fail
+        // together — a crash between the two writes would otherwise leave
+        // an "approved" approval against an ad still "pending".
+        DB::transaction(function () use ($request, $advertisement) {
+            $approval = $advertisement->approvals()->where('status', ApprovalStatus::Pending)->latest()->firstOrFail();
+            $approval->update([
+                'status' => ApprovalStatus::Approved,
+                'reviewed_by' => $request->user()->id,
+                'reviewed_at' => now(),
+            ]);
 
-        $advertisement->update(['status' => ContentStatus::Approved]);
+            $advertisement->update(['status' => ContentStatus::Approved]);
+        });
 
         $advertisement->creator->notify(new ContentReviewed('advertisement', $advertisement->title, $advertisement->id, ApprovalStatus::Approved, null));
 
@@ -74,15 +80,17 @@ class AdvertisementController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $approval = $advertisement->approvals()->where('status', ApprovalStatus::Pending)->latest()->firstOrFail();
-        $approval->update([
-            'status' => ApprovalStatus::Rejected,
-            'reviewed_by' => $request->user()->id,
-            'reviewed_at' => now(),
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        DB::transaction(function () use ($request, $advertisement, $validated) {
+            $approval = $advertisement->approvals()->where('status', ApprovalStatus::Pending)->latest()->firstOrFail();
+            $approval->update([
+                'status' => ApprovalStatus::Rejected,
+                'reviewed_by' => $request->user()->id,
+                'reviewed_at' => now(),
+                'notes' => $validated['notes'] ?? null,
+            ]);
 
-        $advertisement->update(['status' => ContentStatus::Rejected]);
+            $advertisement->update(['status' => ContentStatus::Rejected]);
+        });
 
         $advertisement->creator->notify(new ContentReviewed('advertisement', $advertisement->title, $advertisement->id, ApprovalStatus::Rejected, $validated['notes'] ?? null));
 

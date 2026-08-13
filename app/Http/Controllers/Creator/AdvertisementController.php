@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Notifications\ContentSubmittedForReview;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 
@@ -71,12 +72,18 @@ class AdvertisementController extends Controller
 
         abort_unless($advertisement->status->canSubmit(), 422, 'This advertisement cannot be submitted from its current status.');
 
-        $advertisement->update(['status' => ContentStatus::Pending]);
+        // An ad marked "pending" must always have a matching pending
+        // approval record — the admin queue is built by querying that
+        // record, so a partial write here would silently hide the ad from
+        // reviewers.
+        DB::transaction(function () use ($request, $advertisement) {
+            $advertisement->update(['status' => ContentStatus::Pending]);
 
-        $advertisement->approvals()->create([
-            'requested_by' => $request->user()->id,
-            'status' => ApprovalStatus::Pending,
-        ]);
+            $advertisement->approvals()->create([
+                'requested_by' => $request->user()->id,
+                'status' => ApprovalStatus::Pending,
+            ]);
+        });
 
         $reviewers = User::whereIn('role', [Role::Admin, Role::SuperAdmin])->get();
         Notification::send($reviewers, new ContentSubmittedForReview('advertisement', $advertisement->title, $request->user()->name));

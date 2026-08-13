@@ -25,7 +25,9 @@
                         &mdash; awaiting payment confirmation.
                     @endif
                 </div>
-            @else
+            @endif
+
+            @if ($canPurchase)
                 <form method="POST" action="{{ route('user.scripts.purchase', $script) }}" class="mb-3">
                     @csrf
                     <button type="submit" class="btn btn-primary">Buy this script</button>
