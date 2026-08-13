@@ -378,9 +378,9 @@ class DatabaseSeeder extends Seeder
                 ->whereIn('purchasable_id', Course::where('creator_id', $creator->id)->pluck('id'))
                 ->sum('price')
                 + (float) Purchase::where('status', PurchaseStatus::Completed)
-                ->where('purchasable_type', Script::class)
-                ->whereIn('purchasable_id', Script::where('creator_id', $creator->id)->pluck('id'))
-                ->sum('price');
+                    ->where('purchasable_type', Script::class)
+                    ->whereIn('purchasable_id', Script::where('creator_id', $creator->id)->pluck('id'))
+                    ->sum('price');
 
             if ($earned < 1) {
                 continue;

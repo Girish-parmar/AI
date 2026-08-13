@@ -7,7 +7,6 @@ use App\Http\Requests\LegalDocument\StoreLegalDocumentRequest;
 use App\Http\Requests\LegalDocument\UpdateLegalDocumentRequest;
 use App\Models\LegalDocument;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class LegalDocumentController extends Controller

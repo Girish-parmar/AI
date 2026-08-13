@@ -40,6 +40,9 @@ jobs:
     - name: Audit dependencies for known vulnerabilities
       run: composer audit
 
+    - name: Check code style
+      run: composer run-script lint
+
     - name: Prepare environment
       run: |
         cp .env.example .env

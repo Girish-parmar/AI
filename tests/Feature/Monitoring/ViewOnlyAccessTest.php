@@ -7,6 +7,7 @@ use App\Enums\Role;
 use App\Enums\TransactionStatus;
 use App\Models\Course;
 use App\Models\Payout;
+use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -155,7 +156,7 @@ class ViewOnlyAccessTest extends TestCase
 
     public function test_monitoring_and_accounts_can_view_subscription_plans_but_not_manage_them(): void
     {
-        $plan = \App\Models\SubscriptionPlan::factory()->create();
+        $plan = SubscriptionPlan::factory()->create();
 
         foreach ([Role::Monitoring, Role::Accounts] as $role) {
             $actor = User::factory()->create(['role' => $role]);

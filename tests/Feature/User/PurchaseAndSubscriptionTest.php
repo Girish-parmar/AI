@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\User;
 
-use App\Enums\ContentStatus;
 use App\Enums\PurchaseStatus;
 use App\Enums\Role;
 use App\Enums\SubscriptionStatus;
@@ -13,6 +12,8 @@ use App\Models\Subscription;
 use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Notifications\PurchaseStatusUpdated;
+use App\Notifications\SubscriptionStatusUpdated;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -78,7 +79,7 @@ class PurchaseAndSubscriptionTest extends TestCase
 
         $this->assertSame(PurchaseStatus::Completed, $purchase->fresh()->status);
         $this->assertSame(TransactionStatus::Succeeded, $transaction->fresh()->status);
-        Notification::assertSentTo($user, \App\Notifications\PurchaseStatusUpdated::class);
+        Notification::assertSentTo($user, PurchaseStatusUpdated::class);
     }
 
     public function test_accounts_marking_a_transaction_failed_fails_the_purchase(): void
@@ -157,7 +158,7 @@ class PurchaseAndSubscriptionTest extends TestCase
         $this->actingAs($accounts)->post(route('accounts.transactions.succeed', $transaction));
 
         $this->assertSame(SubscriptionStatus::Active, $subscription->fresh()->status);
-        Notification::assertSentTo($user, \App\Notifications\SubscriptionStatusUpdated::class);
+        Notification::assertSentTo($user, SubscriptionStatusUpdated::class);
     }
 
     public function test_a_user_can_cancel_their_own_active_subscription(): void

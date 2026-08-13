@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\DemoAccess;
 use App\Models\Script;
 use App\Models\User;
+use App\Notifications\DemoAccessGranted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -36,7 +37,7 @@ class DemoAccessTest extends TestCase
             'resource_id' => $course->id,
             'granted_by' => $admin->id,
         ]);
-        Notification::assertSentTo($user, \App\Notifications\DemoAccessGranted::class);
+        Notification::assertSentTo($user, DemoAccessGranted::class);
     }
 
     public function test_a_duplicate_active_grant_for_the_same_user_and_resource_is_rejected(): void

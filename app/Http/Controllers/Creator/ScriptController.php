@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Creator;
 
 use App\Enums\ApprovalStatus;
 use App\Enums\ContentStatus;
-use App\Http\Controllers\Controller;
 use App\Enums\Role;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Content\StoreContentRequest;
 use App\Http\Requests\Content\UpdateContentRequest;
 use App\Models\Script;
