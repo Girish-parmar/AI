@@ -82,11 +82,26 @@ DB_PORT=3306
 DB_DATABASE=u123456789_platform
 DB_USERNAME=u123456789_dbuser
 DB_PASSWORD=the-strong-password-from-step-1
+
+SESSION_SECURE_COOKIE=true
 ```
 
 **Don't skip `APP_ENV=production` and `APP_DEBUG=false`.** Leaving debug mode
 on in production leaks stack traces (including config values) to anyone who
 hits an error page.
+
+**`SESSION_SECURE_COOKIE=true`** stops the session cookie from ever being
+sent over plain HTTP — safe to set once SSL is on (step 8), and it's unset
+in `.env.example` specifically so local dev over `http://localhost` still
+works.
+
+If Hostinger puts a reverse proxy or load balancer in front of the app (some
+plans do for SSL termination), also set `TRUSTED_PROXIES` — otherwise the
+app may not correctly detect that the original request was HTTPS, which
+breaks secure-cookie handling and can generate `http://` links instead of
+`https://`. Leave it blank if you're unsure; add `TRUSTED_PROXIES=*` only if
+you notice mixed-content issues or the app not recognizing HTTPS after going
+live.
 
 ### Mail (required for password reset to actually work)
 
@@ -147,10 +162,10 @@ exit
 ```
 
 Log in at `https://your-domain.com/login` with that email/password. From the
-SuperAdmin dashboard you have full access; other roles (Admin, Monitoring,
-Creator, Accounts) can register normally at `/register` and then have their
-`role` changed via the same `tinker` approach until an admin-accounts UI
-exists (that's still on the roadmap — see `docs/PROJECT_PLAN.md`).
+SuperAdmin dashboard you have full access, including **User Management**
+(`/admin/users`) — use that to create the other role accounts (Admin,
+Monitoring, Creator, Accounts, User) directly, rather than editing roles by
+hand through `tinker`.
 
 ## 7. Set up the cron job
 
@@ -160,10 +175,10 @@ hPanel → **Advanced → Cron Jobs** → add a job that runs every minute:
 * * * * * cd /home/u123456789/platform && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-Nothing is scheduled yet (`routes/console.php` is empty), so this is a
-no-op today — but it's what future scheduled tasks (expiring subscriptions,
-cleaning up old sessions, etc.) will run through, and it costs nothing to
-have in place now rather than remembering to add it later.
+This is what runs the nightly database backup (see **Backups** below), and
+it's what any future scheduled task (expiring subscriptions, cleaning up old
+sessions, etc.) will run through too — no additional cron entries needed as
+the app grows.
 
 ## 8. Enable SSL
 
@@ -199,11 +214,75 @@ speed-up on shared hosting and take a few seconds — worth doing on every
 deploy, not just the first one. If something breaks after caching, `php
 artisan optimize:clear` clears all of them at once.
 
-## Security checklist before going live
+## Backups
 
+`php artisan backup:database` dumps the database (gzipped) to
+`storage/app/backups/` and prunes anything older than 14 days (`--keep=N`
+to change that). It's already scheduled to run nightly at 02:30 through the
+cron job from step 7 — no extra setup needed once that cron entry is in
+place.
+
+A few things worth knowing:
+
+- **This backs up the database only, not `.env`.** That's deliberate —
+  `.env` holds live credentials (DB password, mail password, `APP_KEY`), and
+  writing it into an automated backup folder next to the app is one more
+  place it could leak from. Back up `.env` yourself, separately, somewhere
+  secure (a password manager, an encrypted note) whenever you change it —
+  it changes rarely enough that this doesn't need automating.
+- **Local disk backups don't protect against losing the whole server.**
+  Periodically download the backups directory (SFTP, or hPanel's File
+  Manager) to somewhere off-server, or turn on Hostinger's own
+  account-level backup feature if your plan includes one (hPanel →
+  **Files → Backups**) as a second layer.
+- **Test a restore before you need one.** `gunzip -c
+  storage/app/backups/db-<timestamp>.sql.gz | mysql -u
+  <user> -p <database>` restores a MySQL dump; do this once against a
+  throwaway database to confirm it actually works, rather than finding out
+  during an actual incident.
+
+## Security hardening
+
+Most of this is already built in and needs no action — listed here so you
+know what's covered and what isn't:
+
+- **Security response headers** (`X-Content-Type-Options`, `X-Frame-Options`,
+  `Referrer-Policy`, `Permissions-Policy`, and `Strict-Transport-Security`
+  once HTTPS is on) are added to every response automatically. No
+  Content-Security-Policy is set — Bootstrap's bundled JS and the app's
+  inline `onsubmit` confirms would need a carefully tuned policy to avoid
+  breaking pages, and an untested CSP shipped blind is worse than none.
+- **CSRF protection, bcrypt password hashing, and rate-limited auth routes**
+  (register/login/password-reset each have their own throttle bucket) are
+  all in place already.
+- **Every database write goes through Eloquent** — no raw SQL anywhere in
+  the app, so there's no hand-built-query injection surface to review.
+- **`composer audit` runs in CI** on every push/PR to `main`, so a
+  dependency with a known vulnerability fails the build rather than going
+  unnoticed. Worth re-running (`composer audit`) right before a deploy too,
+  since new advisories can appear between CI runs.
+- **`SESSION_SECURE_COOKIE=true` and `TRUSTED_PROXIES`** — see step 4 above.
+
+## Go-live checklist
+
+Run through this right before (and right after) pointing the domain at the
+live site:
+
+**Environment & access**
 - [ ] `APP_ENV=production`, `APP_DEBUG=false`
-- [ ] `.env` is **not** inside `public_html`/the web-accessible directory (steps 2–3 above)
-- [ ] Real SuperAdmin account created via `tinker`, not the seeder
+- [ ] `.env` is **not** inside `public_html`/the web-accessible directory (steps 2–3)
+- [ ] `SESSION_SECURE_COOKIE=true` set (and `TRUSTED_PROXIES` if the host proxies requests)
+- [ ] Real SuperAdmin account created via `tinker`, not the seeder — and `db:seed` was never run against this database
 - [ ] Database user has strong, unique credentials (not reused elsewhere)
 - [ ] SSL is on and HTTPS is enforced
 - [ ] Mail is configured with real credentials — password reset silently does nothing useful without it
+
+**Backups & monitoring**
+- [ ] Cron job from step 7 is active (`hPanel → Advanced → Cron Jobs`)
+- [ ] `php artisan backup:database` run manually once to confirm it succeeds, and the resulting file was test-restored
+- [ ] A plan exists for getting backups off-server (manual download, or Hostinger's own backup feature)
+
+**Final checks**
+- [ ] `composer audit` clean
+- [ ] Everything in **9. Verify it's live** above passes
+- [ ] No stack traces or debug info show up on a deliberately broken URL

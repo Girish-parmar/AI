@@ -2,9 +2,9 @@ name: PHP Composer
 
 on:
   push:
-    branches: [ "claude/website-role-structure-eidhcp" ]
+    branches: [ "main", "claude/website-role-structure-eidhcp" ]
   pull_request:
-    branches: [ "claude/website-role-structure-eidhcp" ]
+    branches: [ "main", "claude/website-role-structure-eidhcp" ]
 
 permissions:
   contents: read
@@ -36,6 +36,9 @@ jobs:
 
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
+
+    - name: Audit dependencies for known vulnerabilities
+      run: composer audit
 
     - name: Prepare environment
       run: |
