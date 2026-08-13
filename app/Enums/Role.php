@@ -63,8 +63,10 @@ enum Role: string
                 ['label' => 'Advertising', 'available' => true, 'route' => 'admin.advertisements.index'],
                 ['label' => 'Demo Access', 'available' => true, 'route' => 'admin.demo-access.index'],
                 ['label' => 'Legal & Compliance', 'available' => true, 'route' => 'admin.legal-documents.index', 'note' => 'View only'],
+                ['label' => 'Audit Logs', 'available' => true, 'route' => 'monitoring.audit-logs.index', 'note' => 'View only'],
                 ['label' => 'Subscriptions', 'available' => false],
-                ['label' => 'Purchases & Orders', 'available' => false],
+                ['label' => 'Purchases & Orders', 'available' => true, 'route' => 'admin.transactions.index', 'note' => 'View only'],
+                ['label' => 'Finance & Payouts', 'available' => true, 'route' => 'admin.payouts.index', 'note' => 'View only'],
                 ['label' => 'User Management', 'available' => true, 'route' => 'admin.users.index'],
             ],
             self::Monitoring => [
@@ -74,8 +76,9 @@ enum Role: string
                 ['label' => 'Advertising', 'available' => true, 'route' => 'monitoring.advertisements.index', 'note' => 'View only'],
                 ['label' => 'Courses & Scripts', 'available' => true, 'route' => 'monitoring.courses.index', 'note' => 'View only'],
                 ['label' => 'Subscriptions', 'available' => false, 'note' => 'View only'],
-                ['label' => 'Purchases & Orders', 'available' => false, 'note' => 'View only'],
-                ['label' => 'User Management', 'available' => false, 'note' => 'View only'],
+                ['label' => 'Purchases & Orders', 'available' => true, 'route' => 'monitoring.transactions.index', 'note' => 'View only'],
+                ['label' => 'Finance & Payouts', 'available' => true, 'route' => 'monitoring.payouts.index', 'note' => 'View only'],
+                ['label' => 'User Management', 'available' => true, 'route' => 'monitoring.users.index', 'note' => 'View only'],
             ],
             self::Creator => [
                 ['label' => 'Dashboard', 'available' => true, 'route' => 'creator.dashboard'],

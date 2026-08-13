@@ -9,7 +9,9 @@ use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DemoAccessController as AdminDemoAccessController;
 use App\Http\Controllers\Admin\LegalDocumentController as AdminLegalDocumentController;
+use App\Http\Controllers\Admin\PayoutController as AdminPayoutController;
 use App\Http\Controllers\Admin\ScriptController as AdminScriptController;
+use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -28,7 +30,10 @@ use App\Http\Controllers\Monitoring\AuditLogController as MonitoringAuditLogCont
 use App\Http\Controllers\Monitoring\CourseController as MonitoringCourseController;
 use App\Http\Controllers\Monitoring\DashboardController as MonitoringDashboardController;
 use App\Http\Controllers\Monitoring\LegalDocumentController as MonitoringLegalDocumentController;
+use App\Http\Controllers\Monitoring\PayoutController as MonitoringPayoutController;
 use App\Http\Controllers\Monitoring\ScriptController as MonitoringScriptController;
+use App\Http\Controllers\Monitoring\TransactionController as MonitoringTransactionController;
+use App\Http\Controllers\Monitoring\UserController as MonitoringUserController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\User\CourseController as UserCourseController;
@@ -110,6 +115,11 @@ Route::middleware(['auth', 'role:admin,superadmin', 'audit'])
         Route::post('demo-access/{demoAccess}/revoke', [AdminDemoAccessController::class, 'revoke'])->name('demo-access.revoke');
 
         Route::get('legal-documents', [AdminLegalDocumentController::class, 'index'])->name('legal-documents.index');
+
+        // View-only: Admin gets "View" on Purchases/Orders and Finance per
+        // the plan, not the Full reconcile/payout actions Accounts has.
+        Route::get('transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
+        Route::get('payouts', [AdminPayoutController::class, 'index'])->name('payouts.index');
     });
 
 Route::middleware(['auth', 'role:monitoring', 'audit'])
@@ -121,17 +131,31 @@ Route::middleware(['auth', 'role:monitoring', 'audit'])
         Route::get('courses', [MonitoringCourseController::class, 'index'])->name('courses.index');
         Route::get('scripts', [MonitoringScriptController::class, 'index'])->name('scripts.index');
         Route::get('advertisements', [MonitoringAdvertisementController::class, 'index'])->name('advertisements.index');
+
+        // View-only, matching the plan's "Monitoring gets view rights equal
+        // to Admin across all modules" — these mirror the admin.* views
+        // above, not the write actions Admin/Accounts have.
+        Route::get('users', [MonitoringUserController::class, 'index'])->name('users.index');
+        Route::get('transactions', [MonitoringTransactionController::class, 'index'])->name('transactions.index');
+        Route::get('payouts', [MonitoringPayoutController::class, 'index'])->name('payouts.index');
     });
 
-// Audit log viewer and legal document management, shared by Monitoring and
-// SuperAdmin (both are "Full" for SuperAdmin per the plan, unlike the
-// monitoring-only group above).
-Route::middleware(['auth', 'role:monitoring,superadmin', 'audit'])
+// Audit log viewer, shared by Admin, Monitoring, and SuperAdmin. Already a
+// pure read-only page (AuditLog records aren't editable), so no separate
+// per-role controller/view needed the way the other domains above have one.
+Route::middleware(['auth', 'role:admin,monitoring,superadmin', 'audit'])
     ->prefix('monitoring')
     ->name('monitoring.')
     ->group(function () {
         Route::get('audit-logs', [MonitoringAuditLogController::class, 'index'])->name('audit-logs.index');
+    });
 
+// Legal document management, shared by Monitoring and SuperAdmin only —
+// Admin gets the separate view-only /admin/legal-documents route instead.
+Route::middleware(['auth', 'role:monitoring,superadmin', 'audit'])
+    ->prefix('monitoring')
+    ->name('monitoring.')
+    ->group(function () {
         Route::resource('legal-documents', MonitoringLegalDocumentController::class)->except(['show']);
         Route::post('legal-documents/{legalDocument}/publish', [MonitoringLegalDocumentController::class, 'publish'])->name('legal-documents.publish');
         Route::post('legal-documents/{legalDocument}/unpublish', [MonitoringLegalDocumentController::class, 'unpublish'])->name('legal-documents.unpublish');
