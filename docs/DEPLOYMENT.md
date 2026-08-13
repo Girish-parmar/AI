@@ -241,6 +241,29 @@ A few things worth knowing:
   throwaway database to confirm it actually works, rather than finding out
   during an actual incident.
 
+## Hosting limits & data retention
+
+Hostinger's shared plans cap **each database at a hard 3 GB**, and the two
+tables that only ever grow — `audit_logs` (one row per state-changing staff
+action) and `notifications` — are what will eventually hit it. Three
+scheduled tasks keep the app inside that ceiling, all running through the
+same step-7 cron entry with no extra setup:
+
+- **`model:prune`** (daily 03:00) deletes audit log entries older than the
+  retention window — 365 days by default (`AUDIT_LOG_RETENTION_DAYS`).
+- **`notifications:prune`** (daily 03:10) deletes read notifications older
+  than 90 days (`NOTIFICATION_RETENTION_DAYS`) and unread ones older than
+  twice that.
+- **`hosting:health`** (weekly, Mondays 03:30) measures the database
+  against the cap and emails/notifies every SuperAdmin when it crosses 70%
+  (start archiving) or 85% (plan the move to a Cloud/VPS tier). The cap and
+  thresholds are configurable via `HOSTING_DATABASE_CAP_GB`,
+  `HOSTING_DATABASE_WARN_RATIO`, and `HOSTING_DATABASE_CRITICAL_RATIO` if
+  the hosting plan ever changes.
+
+You can run `php artisan hosting:health` by hand any time to see current
+usage.
+
 ## Security hardening
 
 Most of this is already built in and needs no action — listed here so you

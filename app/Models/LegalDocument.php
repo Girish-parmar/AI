@@ -14,6 +14,44 @@ class LegalDocument extends Model
 {
     use HasFactory;
 
+    /**
+     * Cache key for the footer's published-documents link list, which
+     * would otherwise be queried on every page render. Invalidated on
+     * any write so publish/unpublish/edit reflect immediately.
+     */
+    public const FOOTER_CACHE_KEY = 'legal-documents.footer-links';
+
+    protected static function booted(): void
+    {
+        $forget = fn () => cache()->forget(self::FOOTER_CACHE_KEY);
+
+        static::saved($forget);
+        static::deleted($forget);
+    }
+
+    /**
+     * The most recently published document per type, as plain arrays —
+     * what the footer renders. Cached for an hour; the booted() hooks
+     * above clear it on any change.
+     *
+     * @return array<int, array{type: string, title: string}>
+     */
+    public static function footerLinks(): array
+    {
+        return cache()->remember(self::FOOTER_CACHE_KEY, now()->addHour(), function () {
+            return static::published()
+                ->orderByDesc('published_at')
+                ->get(['type', 'title'])
+                ->unique('type')
+                ->map(fn (self $document) => [
+                    'type' => $document->type->value,
+                    'title' => $document->title,
+                ])
+                ->values()
+                ->all();
+        });
+    }
+
     protected function casts(): array
     {
         return [
