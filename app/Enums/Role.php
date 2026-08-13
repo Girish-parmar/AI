@@ -51,7 +51,7 @@ enum Role: string
                 ['label' => 'Purchases & Orders', 'available' => true, 'route' => 'accounts.transactions.index'],
                 ['label' => 'User Management', 'available' => true, 'route' => 'admin.users.index'],
                 ['label' => 'Audit Logs', 'available' => true, 'route' => 'monitoring.audit-logs.index'],
-                ['label' => 'Legal & Compliance', 'available' => false],
+                ['label' => 'Legal & Compliance', 'available' => true, 'route' => 'monitoring.legal-documents.index'],
                 ['label' => 'Advertising', 'available' => true, 'route' => 'admin.advertisements.index'],
                 ['label' => 'Demo Access', 'available' => true, 'route' => 'admin.demo-access.index'],
                 ['label' => 'Finance & Payouts', 'available' => true, 'route' => 'accounts.payouts.index'],
@@ -62,6 +62,7 @@ enum Role: string
                 ['label' => 'Approvals', 'available' => false],
                 ['label' => 'Advertising', 'available' => true, 'route' => 'admin.advertisements.index'],
                 ['label' => 'Demo Access', 'available' => true, 'route' => 'admin.demo-access.index'],
+                ['label' => 'Legal & Compliance', 'available' => true, 'route' => 'admin.legal-documents.index', 'note' => 'View only'],
                 ['label' => 'Subscriptions', 'available' => false],
                 ['label' => 'Purchases & Orders', 'available' => false],
                 ['label' => 'User Management', 'available' => true, 'route' => 'admin.users.index'],
@@ -69,7 +70,7 @@ enum Role: string
             self::Monitoring => [
                 ['label' => 'Dashboard', 'available' => true, 'route' => 'monitoring.dashboard'],
                 ['label' => 'Audit Logs', 'available' => true, 'route' => 'monitoring.audit-logs.index'],
-                ['label' => 'Legal & Compliance', 'available' => false],
+                ['label' => 'Legal & Compliance', 'available' => true, 'route' => 'monitoring.legal-documents.index'],
                 ['label' => 'Advertising', 'available' => true, 'route' => 'monitoring.advertisements.index', 'note' => 'View only'],
                 ['label' => 'Courses & Scripts', 'available' => true, 'route' => 'monitoring.courses.index', 'note' => 'View only'],
                 ['label' => 'Subscriptions', 'available' => false, 'note' => 'View only'],
@@ -97,6 +98,7 @@ enum Role: string
                 ['label' => 'Payouts', 'available' => true, 'route' => 'accounts.payouts.index'],
                 ['label' => 'Revenue Reports', 'available' => false],
                 ['label' => 'Purchases & Orders', 'available' => true, 'route' => 'accounts.transactions.index'],
+                ['label' => 'Legal & Compliance', 'available' => true, 'route' => 'accounts.legal-documents.index', 'note' => 'View only'],
             ],
         };
     }

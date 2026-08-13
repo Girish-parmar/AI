@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\Accounts\DashboardController as AccountsDashboardController;
+use App\Http\Controllers\Accounts\LegalDocumentController as AccountsLegalDocumentController;
 use App\Http\Controllers\Accounts\PayoutController as AccountsPayoutController;
 use App\Http\Controllers\Accounts\TransactionController as AccountsTransactionController;
 use App\Http\Controllers\Admin\AdvertisementController as AdminAdvertisementController;
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\DemoAccessController as AdminDemoAccessController;
+use App\Http\Controllers\Admin\LegalDocumentController as AdminLegalDocumentController;
 use App\Http\Controllers\Admin\ScriptController as AdminScriptController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -20,10 +22,12 @@ use App\Http\Controllers\Creator\EarningsController as CreatorEarningsController
 use App\Http\Controllers\Creator\ScriptController as CreatorScriptController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LegalDocumentController;
 use App\Http\Controllers\Monitoring\AdvertisementController as MonitoringAdvertisementController;
 use App\Http\Controllers\Monitoring\AuditLogController as MonitoringAuditLogController;
 use App\Http\Controllers\Monitoring\CourseController as MonitoringCourseController;
 use App\Http\Controllers\Monitoring\DashboardController as MonitoringDashboardController;
+use App\Http\Controllers\Monitoring\LegalDocumentController as MonitoringLegalDocumentController;
 use App\Http\Controllers\Monitoring\ScriptController as MonitoringScriptController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
@@ -36,6 +40,8 @@ use App\Http\Controllers\User\SubscriptionController as UserSubscriptionControll
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::get('legal/{type}', [LegalDocumentController::class, 'show'])->name('legal.show');
 
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
@@ -102,6 +108,8 @@ Route::middleware(['auth', 'role:admin,superadmin', 'audit'])
 
         Route::resource('demo-access', AdminDemoAccessController::class)->only(['index', 'create', 'store']);
         Route::post('demo-access/{demoAccess}/revoke', [AdminDemoAccessController::class, 'revoke'])->name('demo-access.revoke');
+
+        Route::get('legal-documents', [AdminLegalDocumentController::class, 'index'])->name('legal-documents.index');
     });
 
 Route::middleware(['auth', 'role:monitoring', 'audit'])
@@ -115,12 +123,18 @@ Route::middleware(['auth', 'role:monitoring', 'audit'])
         Route::get('advertisements', [MonitoringAdvertisementController::class, 'index'])->name('advertisements.index');
     });
 
-// Audit log viewer, shared by Monitoring and SuperAdmin.
+// Audit log viewer and legal document management, shared by Monitoring and
+// SuperAdmin (both are "Full" for SuperAdmin per the plan, unlike the
+// monitoring-only group above).
 Route::middleware(['auth', 'role:monitoring,superadmin', 'audit'])
     ->prefix('monitoring')
     ->name('monitoring.')
     ->group(function () {
         Route::get('audit-logs', [MonitoringAuditLogController::class, 'index'])->name('audit-logs.index');
+
+        Route::resource('legal-documents', MonitoringLegalDocumentController::class)->except(['show']);
+        Route::post('legal-documents/{legalDocument}/publish', [MonitoringLegalDocumentController::class, 'publish'])->name('legal-documents.publish');
+        Route::post('legal-documents/{legalDocument}/unpublish', [MonitoringLegalDocumentController::class, 'unpublish'])->name('legal-documents.unpublish');
     });
 
 Route::middleware(['auth', 'role:creator'])
@@ -181,4 +195,6 @@ Route::middleware(['auth', 'role:accounts,superadmin', 'audit'])
         Route::post('payouts', [AccountsPayoutController::class, 'store'])->name('payouts.store');
         Route::post('payouts/{payout}/pay', [AccountsPayoutController::class, 'pay'])->name('payouts.pay');
         Route::post('payouts/{payout}/fail', [AccountsPayoutController::class, 'fail'])->name('payouts.fail');
+
+        Route::get('legal-documents', [AccountsLegalDocumentController::class, 'index'])->name('legal-documents.index');
     });
