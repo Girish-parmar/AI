@@ -49,7 +49,7 @@ enum Role: string
                 ['label' => 'Approvals', 'available' => false],
                 ['label' => 'Subscriptions', 'available' => false],
                 ['label' => 'Purchases & Orders', 'available' => true, 'route' => 'accounts.transactions.index'],
-                ['label' => 'User Management', 'available' => false],
+                ['label' => 'User Management', 'available' => true, 'route' => 'admin.users.index'],
                 ['label' => 'Audit Logs', 'available' => true, 'route' => 'monitoring.audit-logs.index'],
                 ['label' => 'Legal & Compliance', 'available' => false],
                 ['label' => 'Advertising', 'available' => false],
@@ -61,7 +61,7 @@ enum Role: string
                 ['label' => 'Approvals', 'available' => false],
                 ['label' => 'Subscriptions', 'available' => false],
                 ['label' => 'Purchases & Orders', 'available' => false],
-                ['label' => 'User Management', 'available' => false],
+                ['label' => 'User Management', 'available' => true, 'route' => 'admin.users.index'],
             ],
             self::Monitoring => [
                 ['label' => 'Dashboard', 'available' => true, 'route' => 'monitoring.dashboard'],

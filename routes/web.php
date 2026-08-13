@@ -6,6 +6,7 @@ use App\Http\Controllers\Accounts\TransactionController as AccountsTransactionCo
 use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ScriptController as AdminScriptController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -82,6 +83,8 @@ Route::middleware(['auth', 'role:admin,superadmin', 'audit'])
         Route::resource('scripts', AdminScriptController::class)->only(['index', 'edit', 'update', 'destroy']);
         Route::post('scripts/{script}/approve', [AdminScriptController::class, 'approve'])->name('scripts.approve');
         Route::post('scripts/{script}/reject', [AdminScriptController::class, 'reject'])->name('scripts.reject');
+
+        Route::resource('users', AdminUserController::class)->except(['show']);
     });
 
 Route::middleware(['auth', 'role:monitoring', 'audit'])
