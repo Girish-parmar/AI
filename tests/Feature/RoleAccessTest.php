@@ -107,7 +107,18 @@ class RoleAccessTest extends TestCase
 
         $this->actingAs($admin)->get(route('accounts.dashboard'))->assertForbidden();
         $this->actingAs($admin)->get(route('monitoring.dashboard'))->assertForbidden();
-        $this->actingAs($admin)->get(route('monitoring.audit-logs.index'))->assertForbidden();
+    }
+
+    public function test_plain_admin_can_view_the_shared_audit_log_group_but_not_legal_document_management(): void
+    {
+        // Admin was deliberately added only to the audit-logs group, not the
+        // adjacent legal-documents CRUD group — regression guard against
+        // accidentally widening both when only one was intended.
+        $admin = User::factory()->create(['role' => Role::Admin]);
+
+        $this->actingAs($admin)->get(route('monitoring.audit-logs.index'))->assertStatus(200);
+        $this->actingAs($admin)->get(route('monitoring.legal-documents.index'))->assertForbidden();
+        $this->actingAs($admin)->get(route('monitoring.legal-documents.create'))->assertForbidden();
     }
 
     public function test_guests_are_redirected_to_login_for_protected_routes(): void
