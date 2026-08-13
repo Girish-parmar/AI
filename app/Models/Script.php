@@ -38,6 +38,11 @@ class Script extends Model
         return $this->morphMany(Purchase::class, 'purchasable');
     }
 
+    public function demoAccesses(): MorphMany
+    {
+        return $this->morphMany(DemoAccess::class, 'resource');
+    }
+
     public function scopeApproved(Builder $query): Builder
     {
         return $query->where('status', ContentStatus::Approved);

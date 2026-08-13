@@ -10,22 +10,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-#[Fillable(['title', 'description', 'category', 'price', 'status'])]
-class Course extends Model
+#[Fillable(['title', 'banner_path', 'target_url', 'status', 'starts_at', 'ends_at'])]
+class Advertisement extends Model
 {
     use HasFactory;
 
     protected function casts(): array
     {
         return [
-            'price' => 'decimal:2',
             'status' => ContentStatus::class,
+            'starts_at' => 'datetime',
+            'ends_at' => 'datetime',
         ];
     }
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function approvals(): MorphMany
@@ -33,23 +34,8 @@ class Course extends Model
         return $this->morphMany(Approval::class, 'approvable');
     }
 
-    public function purchases(): MorphMany
-    {
-        return $this->morphMany(Purchase::class, 'purchasable');
-    }
-
-    public function demoAccesses(): MorphMany
-    {
-        return $this->morphMany(DemoAccess::class, 'resource');
-    }
-
     public function scopeApproved(Builder $query): Builder
     {
         return $query->where('status', ContentStatus::Approved);
-    }
-
-    public function scopeOwnedBy(Builder $query, int $userId): Builder
-    {
-        return $query->where('creator_id', $userId);
     }
 }

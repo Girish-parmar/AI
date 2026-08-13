@@ -9,7 +9,10 @@ use App\Enums\PurchaseStatus;
 use App\Enums\Role;
 use App\Enums\SubscriptionStatus;
 use App\Enums\TransactionStatus;
+use App\Models\Advertisement;
 use App\Models\Course;
+use App\Models\DemoAccess;
+use App\Models\LegalDocument;
 use App\Models\Payout;
 use App\Models\Purchase;
 use App\Models\Script;
@@ -149,6 +152,47 @@ class DatabaseSeeder extends Seeder
             'reference' => 'seed-payout-1',
             'paid_at' => now()->subDays(3),
         ]);
+
+        Advertisement::factory()->create([
+            'created_by' => $creator->id,
+            'title' => 'Learn Guitar in 30 Days',
+        ]);
+
+        $this->submitted(
+            Advertisement::factory()->pending()->create(['created_by' => $creator->id, 'title' => '50% Off Laravel Course']),
+            $creator
+        );
+
+        Advertisement::factory()->approved()->create([
+            'created_by' => $creator->id,
+            'title' => 'New: Automation Scripts',
+        ]);
+
+        LegalDocument::create([
+            'type' => 'terms_of_service',
+            'title' => 'Terms of Service',
+            'content' => "These are the platform's terms of service.",
+            'version' => '1.0',
+            'created_by' => $users['monitoring']->id,
+            'published_at' => now()->subMonth(),
+        ]);
+
+        LegalDocument::create([
+            'type' => 'privacy_policy',
+            'title' => 'Privacy Policy',
+            'content' => 'Draft privacy policy, not yet published.',
+            'version' => '0.1',
+            'created_by' => $users['monitoring']->id,
+            'published_at' => null,
+        ]);
+
+        DemoAccess::create([
+            'user_id' => $subscriber->id,
+            'resource_type' => Course::class,
+            'resource_id' => $approvedCourse->id,
+            'granted_by' => $users['admin']->id,
+            'expires_at' => now()->addDays(7),
+        ]);
     }
 
     private function paid(User $user, Subscription|Purchase $payable, string $amount): void
@@ -162,7 +206,7 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 
-    private function submitted(Course|Script $content, User $creator): void
+    private function submitted(Course|Script|Advertisement $content, User $creator): void
     {
         $content->approvals()->create([
             'requested_by' => $creator->id,
@@ -170,7 +214,7 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 
-    private function reviewed(Course|Script $content, User $creator, User $reviewer, ApprovalStatus $status, ?string $notes): void
+    private function reviewed(Course|Script|Advertisement $content, User $creator, User $reviewer, ApprovalStatus $status, ?string $notes): void
     {
         $content->approvals()->create([
             'requested_by' => $creator->id,
